@@ -9,7 +9,7 @@ import sys
 import dspam.milter
 
 # Allow passing an alternative config file from the command-line
-config_file = '/etc/dspam-milter.py'
+config_file = '/etc/dspam-milter.cfg'
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
 
