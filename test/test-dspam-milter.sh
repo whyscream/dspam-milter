@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Copyright (c) 2012, Tom Hendrikx
+# All rights reserved.
+#
+# See LICENSE for the license.
+
 # Simple test utility to pass a message to the milter, and see the results.
 # Install libmilter-server0 package from http://milter-manager.sourceforge.net/
 

@@ -1,3 +1,8 @@
+# Copyright (c) 2012, Tom Hendrikx
+# All rights reserved.
+#
+# See LICENSE for the license.
+
 import socket
 import logging
 import re
