@@ -1,0 +1,31 @@
+Received: from mail.example.org (mail.example.org [192.0.2.1])
+    by mail.example.net (Postfix) with ESMTP id 3E9D1D003
+    for <recipient@example.net>; Wed, 24 Jul 2003 02:19:23 +0100 (CET)
+Subject: Test mail
+Message-ID: <TEST.1010101@example.org>
+Date: Tue, 23 Jul 2003 23:30:00 +0200
+From: Sender <sender@example.org>
+To: Recipient <recipient@example.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+This is a test message.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi dolor felis, 
+volutpat non cursus at, mattis ac sapien. Morbi nec lorem vulputate dui 
+ultricies pharetra. Phasellus et odio est, vitae congue enim. Sed scelerisque 
+pulvinar purus eu egestas. Aliquam viverra ultrices justo, sed sodales purus 
+dapibus nec. Nunc imperdiet, purus eu venenatis aliquam, justo nibh auctor 
+ipsum, a sollicitudin massa neque sit amet mi. Proin vel ipsum orci. Mauris 
+vitae mi nunc, eu vulputate felis. Vestibulum ante ipsum primis in faucibus orci 
+luctus et ultrices posuere cubilia Curae;
+
+Etiam vel semper felis. Nulla facilisi. Aliquam id dui sit amet nibh elementum 
+dignissim at eu dolor. Maecenas adipiscing augue eget libero interdum quis 
+venenatis turpis aliquet. Suspendisse in nunc ante. Mauris iaculis sagittis 
+convallis. Donec augue dui, faucibus sed lobortis eget, tempor sed dolor. Morbi 
+pharetra vulputate scelerisque. Nunc fringilla convallis leo id semper. 
+
+Kind regards,
+    the test sender
