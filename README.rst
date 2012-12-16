@@ -29,7 +29,7 @@ To use the milter, you also need:
 Installation
 ============
 
-To install, simply run ''python setup.py install'' in the distibution root.
+To install, simply run ``python setup.py install`` in the distibution root.
 
 License
 =======
