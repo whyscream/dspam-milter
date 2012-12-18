@@ -108,13 +108,12 @@ class DspamMilter(Milter.Base):
 
         if not self.dspam:
             self.dspam = DspamClient()
-            try:
-                self.dspam.connect()
-                self.dspam.lhlo()
-                results = self.dspam.process(self.message, self.dspam_user)
-            except DspamClientError, err:
-                logger.error('<{}> An error ocurred while talking to DSPAM: {}'.format(self.id, err))
-                return Milter.TEMPFAIL
+
+        try:
+            results = self.dspam.process(self.message, self.dspam_user)
+        except DspamClientError, err:
+            logger.error('<{}> An error ocurred while talking to DSPAM: {}'.format(self.id, err))
+            return Milter.TEMPFAIL
         logger.info('<{}> DSPAM returned results: {}'.format(self.id, ' '.join('{}={}'.format(k, v) for k, v in results.iteritems())))
 
         verdict = self.compute_verdict(results)
