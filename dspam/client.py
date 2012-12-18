@@ -482,6 +482,11 @@ class DspamClient(object):
         self.mailfrom(client_args='--process --deliver=summary')
         self.rcptto((user,))
         self.data(message)
+
+        # check for valid result format
+        if 'class' not in self.results[user]:
+            raise DspamClientError('Unexpected response format from server at END-OF-DATA, an error occcured')
+
         return self.results[user]
 
     def classify(self, message, user):
@@ -501,6 +506,11 @@ class DspamClient(object):
         self.mailfrom(client_args='--classify --deliver=summary')
         self.rcptto((user,))
         self.data(message)
+
+        # check for valid result format
+        if 'class' not in self.results[user]:
+            raise DspamClientError('Unexpected response format from server at END-OF-DATA, an error occcured')
+
         return self.results[user]
 
     def train(self, message, user, class_):
