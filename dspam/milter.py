@@ -102,6 +102,9 @@ class DspamMilter(Milter.Base):
         This will be changed in the future.
 
         """
+        queue_id = self.getsymval('i')
+        logger.info('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
+
         if not self.dspam_user:
             logger.error('<{}> Unable to talk to DSPAM without a valid username'.format(self.id))
             return Milter.TEMPFAIL
