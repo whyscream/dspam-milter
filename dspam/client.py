@@ -453,6 +453,8 @@ class DspamClient(object):
         resp = self._read()
         if not resp.startswith('250'):
             logger.warn('Unexpected server response at RSET: ' + resp)
+        self._recipients = []
+        self.results = {}
 
     def quit(self):
         """
@@ -465,6 +467,8 @@ class DspamClient(object):
             logger.warning('Unexpected server response at QUIT: ' + resp)
         self._socket.close()
         self._socket = None
+        self._recipients = []
+        self.results = {}
 
     def process(self, message, user):
         """
