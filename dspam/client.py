@@ -95,10 +95,10 @@ class DspamClient(object):
         """
         if not line.endswith('\r\n'):
             if line.endswith('\n'):
-                logger.debug('Fixing bare LF before sending data to socket')
+                #logger.debug('Fixing bare LF before sending data to socket')
                 line = line[0:-1] + '\r\n'
             else:
-                logger.debug('Fixing missing CRLF before sending data to socket')
+                #logger.debug('Fixing missing CRLF before sending data to socket')
                 line = line + '\r\n'
         logger.debug('Client sent: ' + line.rstrip())
         self._socket.send(line)
