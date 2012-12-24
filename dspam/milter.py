@@ -30,8 +30,8 @@ class DspamMilter(Milter.Base):
 
     # Constants defining possible return codes for compute_verdict()
     VERDICT_ACCEPT = 1
-    VERDICT_REJECT = 2
-    VERDICT_QUARANTINE = 3
+    VERDICT_QUARANTINE = 2
+    VERDICT_REJECT = 3
 
     # Default configuration
     dspam_user = None
@@ -48,6 +48,7 @@ class DspamMilter(Milter.Base):
         """
         self.id = Milter.uniqueID()
         self.message = ''
+        self.recipients = []
         self.dspam = None
 
     def connect(self, hostname, family, hostaddr):
@@ -59,6 +60,19 @@ class DspamMilter(Milter.Base):
         self.client_port = hostaddr[1]
         self.time_start = time.time()
         logger.info('<{}> Connect from {}[{}]:{}'.format(self.id, hostname, self.client_ip, self.client_port))
+        return Milter.CONTINUE
+
+    def envrcpt(self, rcpt):
+        """
+        Send all recipients to DSPAM.
+
+        """
+        if rcpt.startswith('<'):
+            rcpt = rcpt[1:]
+        if rcpt.endswith('>'):
+            rcpt = rcpt[:-1]
+        self.recipients.append(rcpt)
+        logger.debug('<{}> Received RCPT {}'.format(self.id, rcpt))
         return Milter.CONTINUE
 
     @Milter.noreply
@@ -92,43 +106,69 @@ class DspamMilter(Milter.Base):
 
     def eom(self):
         """
-        Send message to DSPAM for classification and a return a milter response
-        based on the results.
+        Send the message to DSPAM for classification and a return a milter
+        response based on the results.
 
-        For now, there is no way to handle multiple recipients differently,
-        and you need to specify to setup a single DSPAM user account to
-        handle all milter connects. Each message passed to the milter will
-        be classified once for this user, ignoring mulitple recipients.
-        This will be changed in the future.
+        If <DspamMilter>.dspam_user is set, that single DSPAM user account
+        will be used for processing the message. If it is unset, all envelope
+        recipients will be passed to DSPAM, and the final decision is based on
+        the least invasive result in all their classification results.
 
         """
         queue_id = self.getsymval('i')
         logger.info('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
 
-        if not self.dspam_user:
-            logger.error('<{}> Unable to talk to DSPAM without a valid username'.format(self.id))
+        try:
+            if not self.dspam:
+                self.dspam = DspamClient()
+                self.dspam.connect()
+                self.dspam.lhlo()
+                if not self.dspam.dlmtp:
+                    logger.warning('<{}> Connection to DSPAM is established, but DLMTP seems unavailable'.format(self.id))
+            else:
+                self.dspam.rset()
+        except DspamClientError, err:
+            logger.error('<{}> An error ocurred while connecting to DSPAM: {}'.format(self.id, err))
             return Milter.TEMPFAIL
 
-        if not self.dspam:
-            self.dspam = DspamClient()
-
         try:
-            results = self.dspam.process(self.message, self.dspam_user)
+            self.dspam.mailfrom(client_args='--process --deliver=summary')
+            if self.dspam_user:
+                self.dspam.rcptto((self.dspam_user,))
+            else:
+                self.dspam.rcptto(self.recipients)
+            self.dspam.data(self.message)
         except DspamClientError, err:
             logger.error('<{}> An error ocurred while talking to DSPAM: {}'.format(self.id, err))
             return Milter.TEMPFAIL
-        logger.info('<{}> DSPAM returned results: {}'.format(self.id, ' '.join('{}={}'.format(k, v) for k, v in results.iteritems())))
 
-        verdict = self.compute_verdict(results)
-        if verdict == self.VERDICT_REJECT:
-            self.setreply('550', '5.7.1', 'Message is {0[class]}'.format(results))
+        # Clear caches
+        self.message = ''
+        self.recipients = []
+
+        # With multiple recipients, if different verdicts were returned, always
+        #   use the 'lowest' verdict as final, so mail is not lost unexpected.
+        final_verdict = None
+        for rcpt in self.dspam.results:
+            results = self.dspam.results[rcpt]
+            logger.info('<{}> DSPAM returned results for RCPT {}: {}'.format(self.id, rcpt, ' '.join('{}={}'.format(k, v) for k, v in results.iteritems())))
+            verdict = self.compute_verdict(results)
+            if final_verdict is None or verdict < final_verdict:
+                final_verdict = verdict
+                final_results = results
+
+        if final_verdict == self.VERDICT_REJECT:
+            logger.info('<{0}> Rejecting message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            self.setreply('550', '5.7.1', 'Message is {0[class]}'.format(final_results))
             return Milter.REJECT
-        elif verdict == self.VERDICT_QUARANTINE:
-            self.add_dspam_headers(results)
-            self.quarantine('Message is {0[class]} according to DSPAM'.format(results))
+        elif final_verdict == self.VERDICT_QUARANTINE:
+            logger.info('<{0}> Quarantining message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            self.add_dspam_headers(final_results)
+            self.quarantine('Message is {0[class]} according to DSPAM'.format(final_results))
             return Milter.ACCEPT
         else:
-            self.add_dspam_headers(results)
+            logger.info('<{0}> Accepting message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            self.add_dspam_headers(final_results)
             return Milter.ACCEPT
 
     def close(self):
@@ -161,22 +201,22 @@ class DspamMilter(Milter.Base):
         if results['class'] in self.reject_classes:
             threshold = self.reject_classes[ results['class'] ]
             if float(results['confidence']) >= threshold:
-                logger.info('<{0}> Rejecting message based on DSPAM results: class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug('<{0}> Suggesting to reject the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_REJECT
 
         if results['class'] in self.quarantine_classes:
             threshold = self.quarantine_classes[ results['class'] ]
             if float(results['confidence']) >= threshold:
-                logger.info('<{0}> Quarantining message based on DSPAM results: class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug('<{0}> Suggesting to quarantine the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_QUARANTINE
 
         if results['class'] in self.accept_classes:
             threshold = self.accept_classes[ results['class'] ]
             if float(results['confidence']) >= threshold:
-                logger.info('<{0}> Accepting message based on DSPAM results: class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug('<{0}> Suggesting to accept the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_ACCEPT
 
-        logger.info('<{0}> Accepting message, no verdict class matched DSPAM results: class={1[class]}, confidence={1[confidence]}'.format(
+        logger.debug('<{0}> Suggesting to accept the message, no verdict class matched DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(
                     self.id, results))
         return self.VERDICT_ACCEPT
 
