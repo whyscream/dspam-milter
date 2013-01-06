@@ -254,19 +254,37 @@ class DspamMilterDaemon(object):
     socket = 'inet:2425@localhost'
     timeout = 300
     loglevel = 'INFO'
+    #pidfile = '/var/run/dspam/dspam-milter.pid'
+    pidfile = '/tmp/dspam-milter.pid'
 
-    # DaemonRunner app config
-    stdin_path = '/dev/null'
-    stdout_path = '/dev/null'
-    stderr_path = '/dev/tty'
-    pidfile_path = '/tmp/dspam-milter.pid' #'/var/run/dspam/dspam-milter.pid'
-    pidfile_timeout = 5
+    def __init__(self):
+        """
+        Create a new instance.
+
+        """
+        self.bootstrapped = False
+
+    def bootstrap(self):
+        self.setup_logging()
+        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
+        self.setup_config()
+        self.bootstrapped = True
 
     def daemonize(self):
         """
         Start the daemon process.
 
         """
+        if not self.bootstrapped:
+            self.bootstrap()
+
+        # DaemonRunner app config
+        self.stdin_path = '/dev/null'
+        self.stdout_path = '/dev/null'
+        self.stderr_path = '/dev/tty'
+        self.pidfile_path = self.pidfile
+        self.pidfile_timeout = 5
+
         daemon_runner = runner.DaemonRunner(self)
         daemon_runner.do_action()
 
@@ -275,10 +293,8 @@ class DspamMilterDaemon(object):
         Start the actual the Milter process.
 
         """
-        self.setup_logging()
-        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
-        self.setup_config()
-
+        if not self.bootstrapped:
+            self.bootstrap()
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
 
@@ -349,7 +365,7 @@ class DspamMilterDaemon(object):
             logger.debug('Handling config section: ' + section)
 
             for option in cfg.options(section):
-                # kludge: static_user needs to be set on the milter, not on the client
+                # Kludge: static_user needs to be set on the milter, not on the client
                 if section == 'dspam' and option == 'static_user':
                     value = cfg.get('dspam', 'static_user')
                     DspamMilter.static_user = value
@@ -369,6 +385,7 @@ class DspamMilterDaemon(object):
                 setattr(class_, option, value)
                 logger.debug('Config option applied: {}->{}: {}'.format(
                              section, option, value))
+        logger.debug('Configuration completed')
 
     def config_str2dict(self, option_value):
         """
