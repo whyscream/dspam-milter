@@ -20,11 +20,12 @@ Requirements
 ============
 
 * Python 2.7 (python)
+* DSPAM running in daemon mode
 
 To use the milter, you also need:
 
 * pymilter (python-milter)
-* DSPAM (dspam)
+* daemon (python-daemon)
 
 Installation
 ============
