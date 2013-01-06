@@ -12,6 +12,7 @@ import sys
 import time
 
 import Milter
+from daemon import runner
 
 from dspam import VERSION
 from dspam.client import *
@@ -34,7 +35,7 @@ class DspamMilter(Milter.Base):
     VERDICT_REJECT = 3
 
     # Default configuration
-    dspam_user = None
+    static_user = None
     headers = {'Processed': 0, 'Confidence': 0, 'Probability': 0, 'Result': 0, 'Signature': 0}
     header_prefix = 'X-DSPAM-'
     reject_classes = {'Blacklisted': 0, 'Blocklisted': 0, 'Spam': 0.9}
@@ -109,7 +110,7 @@ class DspamMilter(Milter.Base):
         Send the message to DSPAM for classification and a return a milter
         response based on the results.
 
-        If <DspamMilter>.dspam_user is set, that single DSPAM user account
+        If <DspamMilter>.static_user is set, that single DSPAM user account
         will be used for processing the message. If it is unset, all envelope
         recipients will be passed to DSPAM, and the final decision is based on
         the least invasive result in all their classification results.
@@ -133,8 +134,8 @@ class DspamMilter(Milter.Base):
 
         try:
             self.dspam.mailfrom(client_args='--process --deliver=summary')
-            if self.dspam_user:
-                self.dspam.rcptto((self.dspam_user,))
+            if self.static_user:
+                self.dspam.rcptto((self.static_user,))
             else:
                 self.dspam.rcptto(self.recipients)
             self.dspam.data(self.message)
@@ -242,113 +243,160 @@ class DspamMilter(Milter.Base):
                 logger.warning('<{}> Not adding header {}, no data available in DSPAM results'.format(self.id, hname))
 
 
-def verdict_config_to_dict(verdict_cfg):
+class DspamMilterDaemon(object):
     """
-    Parse a verdict classes line as specified in the configuration file, and return it as a dictionary.
-
-    Args:
-    verdict_cfg -- A string describing a verdict.
+    Run the Milter as a UNIX daemon process.
 
     """
-    dict = {}
-    for classification in verdict_cfg.split(','):
-        if ':' in classification:
-            classification, confidence = classification.split(':')
-            confidence = float(confidence)
-        else:
-            confidence = 0
-        dict[classification] = confidence
-    return dict
 
+    # Default configuration
+    config_file = '/etc/dspam-milter.cfg'
+    socket = 'inet:2425@localhost'
+    timeout = 300
+    loglevel = 'INFO'
 
-def runmilter(config_file=None):
-    """
-    Configure and run a milter process.
+    # DaemonRunner app config
+    stdin_path = '/dev/null'
+    stdout_path = '/dev/null'
+    stderr_path = '/dev/tty'
+    pidfile_path = '/tmp/dspam-milter.pid' #'/var/run/dspam/dspam-milter.pid'
+    pidfile_timeout = 5
 
-    Args:
-    config_file -- Path to optional config file.
+    def daemonize(self):
+        """
+        Start the daemon process.
 
-    """
-    # Logging setup
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+        """
+        daemon_runner = runner.DaemonRunner(self)
+        daemon_runner.do_action()
 
-    # Stderr gets critical messages (mostly config/setup issues)
-    stderr = logging.StreamHandler(stream=sys.stderr)
-    stderr.setLevel(logging.CRITICAL)
-    stderr.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s'))
-    root_logger.addHandler(stderr)
+    def run(self):
+        """
+        Start the actual the Milter process.
 
-    # All interesting data goes to syslog
-    syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
-    syslog.setFormatter(logging.Formatter(os.path.basename(sys.argv[0]) + '[%(process)d]: %(name)s: %(levelname)s %(message)s'))
-    root_logger.addHandler(syslog)
+        """
+        self.setup_logging()
+        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
+        self.setup_config()
 
-    logger.info('DSPAM Milter (v{}) startup'.format(VERSION))
+        Milter.factory = DspamMilter
+        Milter.runmilter('DspamMilter', self.socket, self.timeout)
 
-    # Create configuration with basic settings
-    milter_defaults = {'socket': 'inet:2425@localhost', 'timeout': 300, 'loglevel': 'INFO'}
-    config = ConfigParser.RawConfigParser()
-    config.add_section('milter')
-    for option in milter_defaults:
-        config.set('milter', option, milter_defaults[option])
+        logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
 
-    # Read config file
-    if config_file:
-        try:
-            config.readfp(open(config_file))
-        except IOError, err:
-                logger.critical('Error while reading config file {}: {}'.format(config_file, err.strerror))
+    def setup_logging(self):
+        """
+        Configure logging tot syslog.
+
+        """
+        # Get root logger
+        rl = logging.getLogger()
+        rl.setLevel('INFO')
+
+        # Stderr gets critical messages (mostly config/setup issues)
+        #   only when not daemonized
+        stderr = logging.StreamHandler(stream=sys.stderr)
+        stderr.setLevel(logging.CRITICAL)
+        stderr.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s'))
+        rl.addHandler(stderr)
+
+        # All interesting data goes to syslog, using root logger's loglevel
+        syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
+        syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(levelname)s %(message)s'))
+        rl.addHandler(syslog)
+        #logger.info('Logging configured')
+
+    def setup_config(self):
+        """
+        Parse configuration, and setup objects to use it.
+
+        TODO: parse alternative config_file from args.
+
+        """
+        cfg = ConfigParser.RawConfigParser()
+        if self.config_file:
+            try:
+                cfg.readfp(open(self.config_file))
+            except IOError, err:
+                logger.critical('Error while reading config file {}: {}'.format(
+                                self.config_file, err.strerror))
                 sys.exit(1)
-        logger.info('Parsed config file ' + config_file)
+            logger.info('Parsed config file ' + self.config_file)
 
-    # Extract user-defined log level from configuration
-    loglevel = config.get('milter', 'loglevel')
-    loglevel_numeric = getattr(logging, loglevel.upper(), None)
-    if not isinstance(loglevel_numeric, int):
-        logger.critical('Config contains unsupported loglevel: ' + loglevel)
-        exit(1)
-    root_logger.setLevel(loglevel_numeric)
-    logger.debug('Config option configured: milter::loglevel: {}'.format(loglevel))
+        # Extract user-defined log level from configuration
+        if cfg.has_option('milter', 'loglevel'):
+            loglevel = cfg.get('milter', 'loglevel')
+            loglevel_numeric = getattr(logging, loglevel.upper(), None)
+            if not isinstance(loglevel_numeric, int):
+                logger.critical('Config contains unsupported loglevel: ' + loglevel)
+                exit(1)
+            rl = logging.getLogger()
+            rl.setLevel(loglevel_numeric)
+            logger.debug('Config option applied: milter->loglevel: {}'.format(loglevel))
 
-    # Milter configuration
-    milter_socket = config.get('milter', 'socket')
-    logger.debug('Config option configured: milter::socket: {}'.format(milter_socket))
-    milter_timeout = config.get('milter', 'timeout')
-    logger.debug('Config option configured: milter::timeout: {}'.format(milter_timeout))
+        # Apply all config options to their respective classes
+        section_class_map = {
+            'milter': DspamMilterDaemon,
+            'dspam': DspamClient,
+            'classification': DspamMilter,
+        }
+        for section in cfg.sections():
+            try:
+                class_ = section_class_map[section]
+            except KeyError:
+                logger.warning('Config contains unknown section: ' +section)
+                continue
+            logger.debug('Handling config section: ' + section)
 
-    # Dspam configuration
-    if config.has_section('dspam'):
-        for option in ['socket', 'dlmtp_ident', 'dlmtp_pass']:
-            if config.has_option('dspam', option):
-                setattr(DspamClient, option, config.get('dspam', option))
-                logger.debug('Config option configured: dspam::{}: {}'.format(option, getattr(DspamClient, option)))
+            for option in cfg.options(section):
+                # kludge: static_user needs to be set on the milter, not on the client
+                if section == 'dspam' and option == 'static_user':
+                    value = cfg.get('dspam', 'static_user')
+                    DspamMilter.static_user = value
+                    logger.debug('Config option applied: dspam->static_user: {}'.format(
+                                 value))
+                    continue
 
-        if config.has_option('dspam', 'user'):
-            DspamMilter.dspam_user = config.get('dspam', 'user')
-            logger.debug('Config option configured: dspam::user: {}'.format(DspamMilter.dspam_user))
+                if not hasattr(class_, option):
+                    logger.warning('Config contains unknown option: {}:{}'.format(
+                                   section, option))
+                    continue
 
-    # Classification settings
-    if config.has_section('classification'):
-        for option in ['headers', 'header_prefix', 'reject_classes', 'quarantine_classes', 'accept_classes']:
-            if config.has_option('classification', option):
-                value = config.get('classification', option)
+                value = cfg.get(section, option)
                 if ',' in value:
-                    try:
-                        value = verdict_config_to_dict(value)
-                    except:
-                        logger.critical('Config contains invalid markup for {}: {}'.format(option, value))
-                        sys.exit(1)
-                setattr(DspamMilter, option, value)
-                logger.debug('Config option configured: classification::{}: {}'.format(option, value))
+                    value = self.config_str2dict(value)
 
-    # Start the milter
-    logger.debug('Configuration completed, starting process')
-    Milter.factory = DspamMilter
-    Milter.runmilter('DspamMilter', milter_socket, milter_timeout)
-    logger.info('DSPAM Milter (v{}) shutdown'.format(VERSION))
-    logging.shutdown()
+                setattr(class_, option, value)
+                logger.debug('Config option applied: {}->{}: {}'.format(
+                             section, option, value))
 
+    def config_str2dict(self, option_value):
+        """
+        Parse the value of a config option and convert it to a dictionary.
+
+        The configuration allows lines formatted like:
+        foo = Bar:1,Baz,Flub:0.75
+        This gets converted to a dictionary:
+        foo = { 'Bar': 1, 'Baz': 0, 'Flub': 0.75 }
+
+        Args:
+        option_value -- The config string to parse.
+
+        """
+        dict = {}
+        for key in option_value.split(','):
+            if ':' in key:
+                key, value = pair.split(':')
+                value = float(value)
+            else:
+                value = 0
+            dict[key] = value
+        return dict
+
+
+def main():
+    d = DspamMilterDaemon()
+    d.daemonize()
 
 if __name__ == "__main__":
-    runmilter()
+    main()
