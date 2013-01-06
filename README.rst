@@ -31,6 +31,15 @@ Installation
 
 To install, simply run ``python setup.py install`` in the distibution root.
 
+Milter usage
+============
+
+The Milter is a ready to use application. The command ``dspam-milter`` should
+have been installed in your path. Behaviour of the daemon can be controlled
+by editing ``/etc/dspam-milter.cfg``. In general dlmtp_* settings need to be
+configured, and added to dspam.conf. Start the milter process with the
+command: ``dspam-milter start``.
+
 License
 =======
 
