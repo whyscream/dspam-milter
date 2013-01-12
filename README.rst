@@ -25,7 +25,6 @@ Requirements
 To use the milter, you also need:
 
 * pymilter (python-milter)
-* daemon (python-daemon)
 
 Installation
 ============
@@ -38,8 +37,7 @@ Milter usage
 The Milter is a ready to use application. The command ``dspam-milter`` should
 have been installed in your path. Behaviour of the daemon can be controlled
 by editing ``/etc/dspam-milter.cfg``. In general dlmtp_* settings need to be
-configured, and added to dspam.conf. Start the milter process with the
-command: ``dspam-milter start``.
+configured, and added to dspam.conf.
 
 License
 =======
