@@ -120,4 +120,4 @@ def log_to_syslog():
      syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
      syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(levelname)s %(message)s'))
      rl.addHandler(syslog)
-     logger.info('Logging configured')
+     #logger.info('Logging configured')

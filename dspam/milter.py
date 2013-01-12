@@ -306,6 +306,7 @@ class DspamMilterDaemon(object):
                 continue
             logger.debug('Handling config section: ' + section)
 
+            dict_options = ['headers', 'reject_classes', 'quarantine_classes', 'accept_classes']
             for option in cfg.options(section):
                 # Kludge: static_user needs to be set on the milter, not on the client
                 if section == 'dspam' and option == 'static_user':
@@ -321,7 +322,7 @@ class DspamMilterDaemon(object):
                     continue
 
                 value = cfg.get(section, option)
-                if ',' in value:
+                if option in dict_options:
                     value = utils.config_str2dict(value)
 
                 setattr(class_, option, value)
