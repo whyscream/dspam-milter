@@ -6,15 +6,13 @@
 import ConfigParser
 import datetime
 import logging
-from logging.handlers import SysLogHandler
 import os.path
 import sys
 import time
 
 import Milter
-from daemon import runner
 
-from dspam import VERSION
+from dspam import VERSION, utils
 from dspam.client import *
 
 logger = logging.getLogger(__name__)
@@ -257,72 +255,16 @@ class DspamMilterDaemon(object):
     #pidfile = '/var/run/dspam/dspam-milter.pid'
     pidfile = '/tmp/dspam-milter.pid'
 
-    def __init__(self):
-        """
-        Create a new instance.
-
-        """
-        self.bootstrapped = False
-
-    def bootstrap(self):
-        self.setup_logging()
-        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
-        self.setup_config()
-        self.bootstrapped = True
-
-    def daemonize(self):
-        """
-        Start the daemon process.
-
-        """
-        if not self.bootstrapped:
-            self.bootstrap()
-
-        # DaemonRunner app config
-        self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/null'
-        self.stderr_path = '/dev/tty'
-        self.pidfile_path = self.pidfile
-        self.pidfile_timeout = 5
-
-        daemon_runner = runner.DaemonRunner(self)
-        daemon_runner.do_action()
-
     def run(self):
-        """
-        Start the actual the Milter process.
-
-        """
-        if not self.bootstrapped:
-            self.bootstrap()
+        utils.log_to_syslog()
+        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
+        self.configure()
+        utils.daemonize(self.pidfile)
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
-
         logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
 
-    def setup_logging(self):
-        """
-        Configure logging tot syslog.
-
-        """
-        # Get root logger
-        rl = logging.getLogger()
-        rl.setLevel('INFO')
-
-        # Stderr gets critical messages (mostly config/setup issues)
-        #   only when not daemonized
-        stderr = logging.StreamHandler(stream=sys.stderr)
-        stderr.setLevel(logging.CRITICAL)
-        stderr.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s'))
-        rl.addHandler(stderr)
-
-        # All interesting data goes to syslog, using root logger's loglevel
-        syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
-        syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(levelname)s %(message)s'))
-        rl.addHandler(syslog)
-        #logger.info('Logging configured')
-
-    def setup_config(self):
+    def configure(self):
         """
         Parse configuration, and setup objects to use it.
 
@@ -352,7 +294,7 @@ class DspamMilterDaemon(object):
 
         # Apply all config options to their respective classes
         section_class_map = {
-            'milter': DspamMilterDaemon,
+            'milter': self,
             'dspam': DspamClient,
             'classification': DspamMilter,
         }
@@ -360,7 +302,7 @@ class DspamMilterDaemon(object):
             try:
                 class_ = section_class_map[section]
             except KeyError:
-                logger.warning('Config contains unknown section: ' +section)
+                logger.warning('Config contains unknown section: ' + section)
                 continue
             logger.debug('Handling config section: ' + section)
 
@@ -380,40 +322,16 @@ class DspamMilterDaemon(object):
 
                 value = cfg.get(section, option)
                 if ',' in value:
-                    value = self.config_str2dict(value)
+                    value = utils.config_str2dict(value)
 
                 setattr(class_, option, value)
                 logger.debug('Config option applied: {}->{}: {}'.format(
                              section, option, value))
         logger.debug('Configuration completed')
 
-    def config_str2dict(self, option_value):
-        """
-        Parse the value of a config option and convert it to a dictionary.
-
-        The configuration allows lines formatted like:
-        foo = Bar:1,Baz,Flub:0.75
-        This gets converted to a dictionary:
-        foo = { 'Bar': 1, 'Baz': 0, 'Flub': 0.75 }
-
-        Args:
-        option_value -- The config string to parse.
-
-        """
-        dict = {}
-        for key in option_value.split(','):
-            if ':' in key:
-                key, value = pair.split(':')
-                value = float(value)
-            else:
-                value = 0
-            dict[key] = value
-        return dict
-
-
 def main():
     d = DspamMilterDaemon()
-    d.daemonize()
+    d.run()
 
 if __name__ == "__main__":
     main()
