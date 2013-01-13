@@ -263,6 +263,7 @@ class DspamMilterDaemon(object):
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
         logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
+        logging.shutdown()
 
     def configure(self):
         """
