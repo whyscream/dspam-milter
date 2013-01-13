@@ -47,19 +47,20 @@ def daemonize(pidfile=None):
         raise SystemExit(msg)
     signal.signal(signal.SIGTERM, terminate)
 
+    # Redirect input/output streams
+    streams = [sys.stdin, sys.stdout, sys.stderr]
+    for stream in streams:
+        devnull = os.open(os.devnull, os.O_RDWR)
+        os.dup2(devnull, stream.fileno())
+
     # Close file descriptors
-    for fd in reversed(range(2048)):
+    for fd in [stream.fileno() for stream in streams]:
         try:
             os.close(fd)
         except OSError, err:
             if err.errno == errno.EBADF:
                 # File descriptor was not open
                 pass
-
-    # Redirect stdin etc
-    for stream in [sys.stdin, sys.stdout, sys.stderr]:
-        devnull = os.open(os.devnull, os.O_RDWR)
-        os.dup2(devnull, stream.fileno())
 
     # Create pidfile
     if pidfile is not None:
