@@ -7,6 +7,7 @@ import ConfigParser
 import datetime
 import logging
 import os.path
+import re
 import sys
 import time
 
@@ -39,6 +40,7 @@ class DspamMilter(Milter.Base):
     reject_classes = {'Blacklisted': 0, 'Blocklisted': 0, 'Spam': 0.9}
     quarantine_classes = {'Virus': 0}
     accept_classes = {'Innocent': 0, 'Whitelisted': 0}
+    recipient_delimiter = '+'
 
     def __init__(self):
         """
@@ -49,6 +51,10 @@ class DspamMilter(Milter.Base):
         self.message = ''
         self.recipients = []
         self.dspam = None
+        if self.recipient_delimiter:
+            self.recipient_delimiter_re = re.compile('[{}][^@]*'.format(re.escape(self.recipient_delimiter)))
+        else:
+            self.recipient_delimiter_re = None
 
     def connect(self, hostname, family, hostaddr):
         """
@@ -70,8 +76,11 @@ class DspamMilter(Milter.Base):
             rcpt = rcpt[1:]
         if rcpt.endswith('>'):
             rcpt = rcpt[:-1]
-        self.recipients.append(rcpt)
-        logger.debug('<{}> Received RCPT {}'.format(self.id, rcpt))
+        if self.recipient_delimiter_re:
+            rcpt = self.recipient_delimiter_re.sub('', rcpt)
+        if rcpt not in self.recipients:
+            self.recipients.append(rcpt)
+            logger.debug('<{}> Received RCPT {}'.format(self.id, rcpt))
         return Milter.CONTINUE
 
     @Milter.noreply
