@@ -68,7 +68,7 @@ class DspamMilter(Milter.Base):
         logger.info('<{}> Connect from {}[{}]:{}'.format(self.id, hostname, self.client_ip, self.client_port))
         return Milter.CONTINUE
 
-    def envrcpt(self, rcpt):
+    def envrcpt(self, rcpt, *params):
         """
         Send all recipients to DSPAM.
 
