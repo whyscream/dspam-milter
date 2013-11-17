@@ -1,0 +1,21 @@
+Received: from mail.example.org (mail.example.org [192.0.2.1])
+    by mail.example.net (Postfix) with ESMTP id 3E9D1D003
+    for <recipient@example.net>; Wed, 24 Jul 2003 02:19:23 +0100 (CET)
+Subject: Test mail
+Message-ID: <TEST.1010101@example.org>
+Date: Tue, 23 Jul 2003 23:30:00 +0200
+From: Sender <sender@example.org>
+To: Recipient <recipient@example.net>
+X-DSPAM-Processed: Mon Sep 23 09:52:27 2013
+X-DSPAM-Confidence: 0.5462
+X-DSPAM-Probability: 1.0000
+X-DSPAM-Result: Spam
+X-DSPAM-Signature: 523ff33b37981228493666
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+This is a test message containing DSPAM headers.
+
+Kind regards,
+    the test sender

@@ -51,6 +51,7 @@ class DspamMilter(Milter.Base):
         self.message = ''
         self.recipients = []
         self.dspam = None
+        self.remove_headers = []
         if self.recipient_delimiter:
             self.recipient_delimiter_re = re.compile('[{}][^@]*'.format(re.escape(self.recipient_delimiter)))
         else:
@@ -86,11 +87,18 @@ class DspamMilter(Milter.Base):
     @Milter.noreply
     def header(self, name, value):
         """
-        Store all message headers.
+        Store all message headers, optionally clean them up.
+
+        This simply stores all message headers so we can send them to DSPAM.
+        Additionally, headers that have the same prefix as the ones we're
+        about to add are deleted.
 
         """
         self.message += "{}: {}\r\n".format(name, value)
         logger.debug('<{}> Received {} header'.format(self.id, name))
+        if name.lower().startswith(self.header_prefix.lower()):
+            self.remove_headers.append(name)
+            logger.debug('<{}> Going to remove {} header'.format(self.id, name))
         return Milter.CONTINUE
 
     @Milter.noreply
@@ -123,6 +131,10 @@ class DspamMilter(Milter.Base):
         the least invasive result in all their classification results.
 
         """
+        for header in self.remove_headers:
+            self.chgheader(header, 1, '')
+            logger.info('<{}> Removing existing {} header'.format(self.id, header))
+
         queue_id = self.getsymval('i')
         logger.info('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
 
