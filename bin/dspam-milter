@@ -8,4 +8,7 @@
 import sys
 import dspam.milter
 
-dspam.milter.main()
+if len(sys.argv) >= 2:
+    dspam.milter.main(sys.argv[1])
+else:
+    dspam.milter.main()

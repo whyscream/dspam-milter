@@ -257,39 +257,36 @@ class DspamMilterDaemon(object):
     """
 
     # Default configuration
-    config_file = '/etc/dspam-milter.cfg'
     socket = 'inet:2425@localhost'
     timeout = 300
     loglevel = 'INFO'
     #pidfile = '/var/run/dspam/dspam-milter.pid'
     pidfile = '/tmp/dspam-milter.pid'
 
-    def run(self):
+    def run(self, config_file):
         utils.log_to_syslog()
         logger.info('DSPAM Milter startup (v{})'.format(VERSION))
-        self.configure()
+        self.configure(config_file)
         utils.daemonize(self.pidfile)
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
         logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
         logging.shutdown()
 
-    def configure(self):
+    def configure(self, config_file):
         """
         Parse configuration, and setup objects to use it.
 
-        TODO: parse alternative config_file from args.
-
         """
         cfg = ConfigParser.RawConfigParser()
-        if self.config_file:
+        if config_file is not None:
             try:
-                cfg.readfp(open(self.config_file))
+                cfg.readfp(open(config_file))
             except IOError, err:
                 logger.critical('Error while reading config file {}: {}'.format(
-                                self.config_file, err.strerror))
+                                config_file, err.strerror))
                 sys.exit(1)
-            logger.info('Parsed config file ' + self.config_file)
+            logger.info('Parsed config file ' + config_file)
 
         # Extract user-defined log level from configuration
         if cfg.has_option('milter', 'loglevel'):
@@ -340,9 +337,9 @@ class DspamMilterDaemon(object):
                              section, option, value))
         logger.debug('Configuration completed')
 
-def main():
+def main(config_file='/etc/dspam-milter.cfg'):
     d = DspamMilterDaemon()
-    d.run()
+    d.run(config_file)
 
 if __name__ == "__main__":
     main()
