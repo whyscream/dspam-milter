@@ -11,4 +11,4 @@ import dspam.milter
 if len(sys.argv) >= 2:
     dspam.milter.main(sys.argv[1])
 else:
-    dspam.milter.main()
+    dspam.milter.main('/etc/dspam-milter.cfg')
