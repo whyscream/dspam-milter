@@ -274,13 +274,15 @@ class DspamMilterDaemon(object):
     loglevel = 'INFO'
     #pidfile = '/var/run/dspam/dspam-milter.pid'
     pidfile = '/tmp/dspam-milter.pid'
+    daemonize = True
 
     def run(self, config_file=None):
         utils.log_to_syslog()
         logger.info('DSPAM Milter startup (v{})'.format(VERSION))
         if config_file is not None:
              self.configure(config_file)
-        utils.daemonize(self.pidfile)
+        if self.daemonize:
+            utils.daemonize(self.pidfile)
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
         logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
@@ -343,6 +345,10 @@ class DspamMilterDaemon(object):
                 value = cfg.get(section, option)
                 if option in dict_options:
                     value = utils.config_str2dict(value)
+                elif value.lower() in ['false', 'no']:
+                    value = False
+                elif value.lower() in ['true', 'yes']:
+                    value = True
 
                 setattr(class_, option, value)
                 logger.debug('Config option applied: {}->{}: {}'.format(
