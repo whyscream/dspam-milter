@@ -65,7 +65,7 @@ class DspamMilter(Milter.Base):
         self.client_ip = hostaddr[0]
         self.client_port = hostaddr[1]
         self.time_start = time.time()
-        logger.info('<{}> Connect from {}[{}]:{}'.format(self.id, hostname, self.client_ip, self.client_port))
+        logger.debug('<{}> Connect from {}[{}]:{}'.format(self.id, hostname, self.client_ip, self.client_port))
         return Milter.CONTINUE
 
     def envrcpt(self, rcpt, *params):
@@ -136,7 +136,7 @@ class DspamMilter(Milter.Base):
             logger.info('<{}> Removing existing {} header'.format(self.id, header))
 
         queue_id = self.getsymval('i')
-        logger.info('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
+        logger.debug('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
 
         try:
             if not self.dspam:
@@ -178,16 +178,16 @@ class DspamMilter(Milter.Base):
                 final_results = results
 
         if final_verdict == self.VERDICT_REJECT:
-            logger.info('<{0}> Rejecting message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            logger.info('<{0}> Rejecting message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
             self.setreply('550', '5.7.1', 'Message is {0[class]}'.format(final_results))
             return Milter.REJECT
         elif final_verdict == self.VERDICT_QUARANTINE:
-            logger.info('<{0}> Quarantining message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            logger.info('<{0}> Quarantining message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
             self.add_dspam_headers(final_results)
             self.quarantine('Message is {0[class]} according to DSPAM'.format(final_results))
             return Milter.ACCEPT
         else:
-            logger.info('<{0}> Accepting message based on DSPAM results: user={1[user]} class={1[class]} confidence={1[confidence]}'.format(self.id, final_results))
+            logger.info('<{0}> Accepting message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
             self.add_dspam_headers(final_results)
             return Milter.ACCEPT
 
@@ -197,7 +197,7 @@ class DspamMilter(Milter.Base):
 
         """
         time_spent = time.time() - self.time_start
-        logger.info('<{}> Disconnect from [{}]:{}, time spent {:.3f} seconds'.format(self.id, self.client_ip, self.client_port, time_spent))
+        logger.debug('<{}> Disconnect from [{}]:{}, time spent {:.3f} seconds'.format(self.id, self.client_ip, self.client_port, time_spent))
         return Milter.CONTINUE
 
     def compute_verdict(self, results):
