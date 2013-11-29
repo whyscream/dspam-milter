@@ -150,8 +150,14 @@ class DspamClient(object):
         # extract proto from socket setting
         (proto, spec) = self.socket.split(':')
         if proto == 'unix':
-            # connect to UNIX domain socket: TODO
-            raise NotImplementedError
+            # connect to UNIX domain socket
+            try:
+                self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self._socket.connect(spec)
+            except socket.error, err:
+                self._socket = None
+                raise DspamClientError('Failed to connect to DSPAM server at socket {}: {}'.format(spec, err))
+            logger.debug('Connected to DSPAM server at socket {}'.format(spec))
 
         elif proto == 'inet' or proto == 'inet6':
             # connect to TCP socket
@@ -170,11 +176,10 @@ class DspamClient(object):
             except socket.error, err:
                 self._socket = None
                 raise DspamClientError('Failed to connect to DSPAM server at host {} port {}: {}'.format(host, port, err))
-
+            logger.debug('Connected to DSPAM server at host {}, port {}'.format(host, port))
         else:
             raise DspamClientError('Failed to parse DSPAM socket specification, unknown proto '+ proto)
 
-        logger.debug('Connected to DSPAM server at host {}, port {}'.format(host, port))
         resp = self._read()
         if not resp.startswith('220'):
             raise DspamClientError('Unexpected server response at connect: ' + resp)
