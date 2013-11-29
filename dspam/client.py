@@ -18,12 +18,12 @@ class DspamClient(object):
 
     The client is able to speak to a DSPAM server over both a TCP or UNIX
     domain socket exposed by a running DSPAM server, and interact with it
-    through its supported protocols: LMTP and DLMTP: an enhanced version
-    of LMTP to facilitate some options that are not possible when using
-    strict LMTP.
+    through its supported protocols: LMTP and DLMTP. The latter is an
+    enhanced version of LMTP to facilitate some options that are not possible
+    when using strict LMTP.
 
-    Some common DSPAM operations are included in this class, custom 
-    operations can be built by creating a new LMTP dialog with the 
+    Some common DSPAM operations are included in this class, custom
+    operations can be built by creating a new LMTP dialog with the
     low-level LMTP commands.
 
     DSPAM server setup
@@ -34,13 +34,13 @@ class DspamClient(object):
     The server can support mulitple modes (dspam.conf: ServerMode) for
     interaction with connecting clients. Which mode you need, depends on
     the operations you need to perform. Most of the time you'll want to
-    use DLMTP though, which means that you'll also need to setup 
-    authentication (dspam.conf: ServerPass.<ident>)
+    use DLMTP though, which means that you'll also need to setup
+    authentication (dspam.conf: ServerPass.<ident>).
 
     Python DspamClient setup
     ========================
     Each DspamClient instance needs to talk to a DSPAM server.
-    You need to specify the socket where DSPAM is listening when creating 
+    You need to specify the socket where DSPAM is listening when creating
     a new instance. If you need to use DLMTP features (probably most of the
     time), you also need to pass the ident and password.
     
@@ -62,7 +62,8 @@ class DspamClient(object):
 
         Args:
         socket      -- The socket on which DSPAM is listening.
-        dlmtp_ident -- 
+        dlmtp_ident -- The authentication identifier.
+        dlmtp_pass  -- The authentication password.
 
         """
         if socket is not None:
@@ -92,6 +93,7 @@ class DspamClient(object):
 
         Args:
         line -- A single line of data to write to the socket.
+
         """
         if not line.endswith('\r\n'):
             if line.endswith('\n'):
@@ -133,7 +135,7 @@ class DspamClient(object):
         much data from it while peeking.
 
         Args:
-        chars -- the number of chars to peek.
+        chars -- the number of characters to peek.
 
         """
         line = self._socket.recv(chars, socket.MSG_PEEK)
@@ -241,7 +243,7 @@ class DspamClient(object):
 
         """
         if sender and client_args:
-            raise DpamClientError('Arguments are mutually exclusive')
+            raise DspamClientError('Arguments are mutually exclusive')
 
         if client_args and not self.dlmtp:
             raise DspamClientError('Cannot send client args, server does not support DLMTP')
@@ -288,7 +290,7 @@ class DspamClient(object):
         Send LMTP DATA command and process the server response.
 
         The server response is stored as a list of dicts in
-        <DspamClient>.results, keyed on the recipient name(s). Depending 
+        <DspamClient>.results, keyed on the recipient name(s). Depending
         on the server return data, different formats are available:
         * LMTP mode    -- Dict containing 'accepted', a bool indicating
                           that the message was handed to the server.
@@ -340,13 +342,13 @@ class DspamClient(object):
         #   X-DSPAM-Result: bar; result="Spam"; class="Spam"; probability=1.0000; \
         #     confidence=0.85; signature=50c50c0f315636261418125
         #   (after the last summary line, a single dot is sent)
-        # * Stdout response (--delivery=stdout), once for each recipient
+        # * Stdout response (--delivery=stdout), once for each recipient:
         #   X-Daemon-Classification: INNOCENT
         #   <complete mail body>
         #
         # Note that when an unknown recipient is passed in, DSPAM will simply 
         #   deliver the message (dspam.conf: (Un)TrustedDeliveryAgent, DeliveryHost)
-        #   unaltered and unfiltered. The respnse for unknown recipients
+        #   unaltered and unfiltered. The response for unknown recipients
         #   will still be something indicating 'accepted'.
 
         peek = self._peek(24)
