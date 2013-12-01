@@ -148,7 +148,11 @@ class DspamClient(object):
 
         """
         # extract proto from socket setting
-        (proto, spec) = self.socket.split(':')
+        try:
+            (proto, spec) = self.socket.split(':')
+        except ValueError:
+            raise DspamClientError('Failed to parse DSPAM socket specification, no proto found: '+ self.socket)
+
         if proto == 'unix':
             # connect to UNIX domain socket
             try:
