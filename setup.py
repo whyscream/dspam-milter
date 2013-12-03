@@ -3,7 +3,18 @@
 #
 # See LICENSE for the license.
 
-from distutils.core import setup
+from distutils.core import setup, Command
+
+class PyTest(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import sys,subprocess
+        errno = subprocess.call(['py.test', '--verbose', '--cov', '.'])
+        raise SystemExit(errno)
 
 setup(name='pydspam',
     description='Python utilities for interacting with DSPAM ',
@@ -22,4 +33,7 @@ setup(name='pydspam',
         'Topic :: Communications :: Email :: Filters'
     ],
     license='New (3-clause) BSD License',
+    cmdclass={
+        'test': PyTest
+    }
 )
