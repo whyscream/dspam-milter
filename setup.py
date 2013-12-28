@@ -13,7 +13,7 @@ class PyTest(Command):
         pass
     def run(self):
         import sys,subprocess
-        errno = subprocess.call(['py.test', '--verbose', '--cov', '.'])
+        errno = subprocess.call(['py.test', '--verbose', '.'])
         raise SystemExit(errno)
 
 setup(name='dspam-milter',
