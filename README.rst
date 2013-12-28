@@ -9,6 +9,10 @@ the DLMTP protocol.
 Development of dspam-milter is hosted on Github_. For questions, bugs and
 patches, please open an issue_ there. You can also try to send an e-mail_.
 
+.. image:: https://travis-ci.org/whyscream/dspam-milter.png?branch=master 
+   :target: https://travis-ci.org/whyscream/dspam-milter
+   :alt: build status
+
 Features
 ========
 
