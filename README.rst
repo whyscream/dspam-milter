@@ -29,7 +29,7 @@ Requirements
 
 To use the milter, you also need:
 
-* _pymilter (python-milter)
+* pymilter_ (python-milter)
 
 Installation
 ============
