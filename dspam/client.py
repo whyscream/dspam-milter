@@ -286,6 +286,9 @@ class DspamClient(object):
         DSPAM user account name, use the --rcpt-to parameter in client_args
         at mailfrom().
 
+        args:
+        recipients -- A list of recipients
+
         """
         for rcpt in recipients:
             self._send('RCPT TO:<{}>\r\n'.format(rcpt))

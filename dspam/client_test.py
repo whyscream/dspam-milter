@@ -152,3 +152,39 @@ def test_mailfrom_error_response():
     flexmock(c).should_receive('_read').once().and_return('451 Some error ocurred')
     with pytest.raises(DspamClientError):
         c.mailfrom()
+
+def test_rcptto():
+    c = DspamClient()
+    flexmock(c).should_receive('_send').once().with_args('RCPT TO:<foo>\r\n')
+    flexmock(c).should_receive('_read').once().and_return('250 2.1.5 OK')
+    c.rcptto(('foo',))
+
+def test_rcptto_multiple():
+    c = DspamClient()
+    flexmock(c).should_receive('_send').times(3).with_args(re.compile('^RCPT TO:<\w+>\\r\\n'))
+    flexmock(c).should_receive('_read').times(3).and_return('250 2.1.5 OK')
+    c.rcptto(('foo', 'bar', 'qux'))
+
+def test_rcptto_unexpected_response():
+    c = DspamClient()
+    flexmock(c).should_receive('_send').once().with_args(re.compile('^RCPT TO:<\w+>\\r\\n'))
+    flexmock(c).should_receive('_read').once().and_return('550 5.5.1 No such user')
+    with pytest.raises(DspamClientError):
+        c.rcptto(('foo'))
+
+def test_data_unexpected_response_at_data():
+    c = DspamClient()
+    flexmock(c).should_receive('_send').once().with_args('DATA\r\n')
+    flexmock(c).should_receive('_read').once().and_return('451 Some error ocurred')
+    with pytest.raises(DspamClientError):
+        c.data('Sample message')
+
+def test_data_dotstuffing():
+    c = DspamClient()
+    c._recipients = ['foo']
+    flexmock(c).should_receive('_send').with_args('DATA\r\n')
+    flexmock(c).should_receive('_read').and_return('354 Enter mail, end with "." on a line by itself').and_return('250 2.5.0 <foo> Message accepted for delivery')
+    flexmock(c).should_receive('_send').with_args('..')
+    flexmock(c).should_receive('_send').with_args('.\r\n')
+    flexmock(c).should_receive('_peek').once().and_return('250 2.5.0 <foo> Message ')
+    c.data('.')
