@@ -1,6 +1,6 @@
 # Upstart init script for dspam-milter
 
-author "Tom Hendrikx <pydspam@whyscream.net>"
+author "Tom Hendrikx <dspam-milter@whyscream.net>"
 description "dspam milter interface"
 
 start on runlevel [2345]

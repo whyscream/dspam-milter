@@ -16,11 +16,11 @@ class PyTest(Command):
         errno = subprocess.call(['py.test', '--verbose', '--cov', '.'])
         raise SystemExit(errno)
 
-setup(name='pydspam',
-    description='Python utilities for interacting with DSPAM ',
+setup(name='dspam-milter',
+    description='Milter implementation for DSPAM',
     author='Tom Hendrikx',
-    author_email='pydspam@whyscream.net',
-    url='https://github.com/whyscream/pydspam',
+    author_email='dspam-milter@whyscream.net',
+    url='https://github.com/whyscream/dspam-milter',
     version='GIT',
     packages=['dspam'],
     scripts=['bin/dspam-milter'],
