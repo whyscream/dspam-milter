@@ -5,12 +5,6 @@ from flexmock import flexmock
 
 from client import *
 
-# Access details for an actual DSPAM instance, used in some tests
-DSPAM_SOCK = 'inet:2424@localhost'
-DSPAM_IDENT = 'pytest'
-DSPAM_PASS = 'oka0ueVi'
-DSPAM_USER = 'test'
-
 def test_init():
     c = DspamClient()
     assert(c.socket == 'inet:24@localhost')
@@ -49,9 +43,14 @@ def test_read():
     assert c._read() == 'bar'
     assert c._peek() == 'qux'
 
-@pytest.mark.xfail(reason="Dspam is not running")
-def test_connect():
-    c = DspamClient(DSPAM_SOCK)
+def test_connect(monkeypatch):
+    # monkeypatch socket.socket.connect so it succeds without actually creating a connection
+    def mp_socket_connect(self, address):
+	pass
+    monkeypatch.setattr(socket.socket, 'connect', mp_socket_connect)
+
+    c = DspamClient()
+    flexmock(c).should_receive('_read').once().and_return('220 DSPAM DLMTP 3.10.2 Authentication Required')
     c.connect()
     assert isinstance(c._socket, socket.socket)
 
