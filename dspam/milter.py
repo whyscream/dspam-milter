@@ -18,6 +18,7 @@ from dspam.client import *
 
 logger = logging.getLogger(__name__)
 
+
 class DspamMilter(Milter.Base):
     """
     A milter interface to the DSPAM daemon.
@@ -25,7 +26,7 @@ class DspamMilter(Milter.Base):
     This milter can be added to an MTA setup so messages can be inspected
     by a DSPAM server, and optionally rejected or quarantined based on the
     classification results.
- 
+
     """
 
     # Constants defining possible return codes for compute_verdict()
@@ -35,7 +36,13 @@ class DspamMilter(Milter.Base):
 
     # Default configuration
     static_user = None
-    headers = {'Processed': 0, 'Confidence': 0, 'Probability': 0, 'Result': 0, 'Signature': 0}
+    headers = {
+        'Processed': 0,
+        'Confidence': 0,
+        'Probability': 0,
+        'Result': 0,
+        'Signature': 0
+    }
     header_prefix = 'X-DSPAM-'
     reject_classes = {'Blacklisted': 0, 'Blocklisted': 0, 'Spam': 0.9}
     quarantine_classes = {'Virus': 0}
@@ -53,7 +60,8 @@ class DspamMilter(Milter.Base):
         self.dspam = None
         self.remove_headers = []
         if self.recipient_delimiter:
-            self.recipient_delimiter_re = re.compile('[{}][^@]*'.format(re.escape(self.recipient_delimiter)))
+            self.recipient_delimiter_re = re.compile('[{}][^@]*'.format(
+                re.escape(self.recipient_delimiter)))
         else:
             self.recipient_delimiter_re = None
 
@@ -65,7 +73,8 @@ class DspamMilter(Milter.Base):
         self.client_ip = hostaddr[0]
         self.client_port = hostaddr[1]
         self.time_start = time.time()
-        logger.debug('<{}> Connect from {}[{}]:{}'.format(self.id, hostname, self.client_ip, self.client_port))
+        logger.debug('<{}> Connect from {}[{}]:{}'.format(
+            self.id, hostname, self.client_ip, self.client_port))
         return Milter.CONTINUE
 
     def envrcpt(self, rcpt, *params):
@@ -98,7 +107,8 @@ class DspamMilter(Milter.Base):
         logger.debug('<{}> Received {} header'.format(self.id, name))
         if name.lower().startswith(self.header_prefix.lower()):
             self.remove_headers.append(name)
-            logger.debug('<{}> Going to remove {} header'.format(self.id, name))
+            logger.debug('<{}> Going to remove {} header'.format(
+                self.id, name))
         return Milter.CONTINUE
 
     @Milter.noreply
@@ -117,7 +127,8 @@ class DspamMilter(Milter.Base):
 
         """
         self.message += block
-        logger.debug('<{}> Received {} bytes of message body'.format(self.id, len(block)))
+        logger.debug('<{}> Received {} bytes of message body'.format(
+            self.id, len(block)))
         return Milter.CONTINUE
 
     def eom(self):
@@ -133,10 +144,13 @@ class DspamMilter(Milter.Base):
         """
         for header in self.remove_headers:
             self.chgheader(header, 1, '')
-            logger.info('<{}> Removing existing {} header'.format(self.id, header))
+            logger.info('<{}> Removing existing {} header'.format(
+                self.id, header))
 
         queue_id = self.getsymval('i')
-        logger.debug('<{}> Sending message with MTA queue id {} to DSPAM'.format(self.id, queue_id))
+        logger.debug(
+            '<{}> Sending message with MTA queue id {} to DSPAM'.format(
+                self.id, queue_id))
 
         try:
             if not self.dspam:
@@ -144,11 +158,15 @@ class DspamMilter(Milter.Base):
                 self.dspam.connect()
                 self.dspam.lhlo()
                 if not self.dspam.dlmtp:
-                    logger.warning('<{}> Connection to DSPAM is established, but DLMTP seems unavailable'.format(self.id))
+                    logger.warning(
+                        '<{}> Connection to DSPAM is established, but DLMTP '
+                        'seems unavailable'.format(self.id))
             else:
                 self.dspam.rset()
         except DspamClientError, err:
-            logger.error('<{}> An error ocurred while connecting to DSPAM: {}'.format(self.id, err))
+            logger.error(
+                '<{}> An error ocurred while connecting to DSPAM: {}'.format(
+                    self.id, err))
             return Milter.TEMPFAIL
 
         try:
@@ -159,7 +177,9 @@ class DspamMilter(Milter.Base):
                 self.dspam.rcptto(self.recipients)
             self.dspam.data(self.message)
         except DspamClientError, err:
-            logger.error('<{}> An error ocurred while talking to DSPAM: {}'.format(self.id, err))
+            logger.error(
+                '<{}> An error ocurred while talking to DSPAM: {}'.format(
+                    self.id, err))
             return Milter.TEMPFAIL
 
         # Clear caches
@@ -171,23 +191,40 @@ class DspamMilter(Milter.Base):
         final_verdict = None
         for rcpt in self.dspam.results:
             results = self.dspam.results[rcpt]
-            logger.info('<{}> DSPAM returned results for RCPT {}: {}'.format(self.id, rcpt, ' '.join('{}={}'.format(k, v) for k, v in results.iteritems())))
+            logger.info('<{}> DSPAM returned results for RCPT {}: {}'.format(
+                self.id, rcpt,
+                ' '.join('{}={}'.format(k, v) for
+                         k, v in results.iteritems())))
             verdict = self.compute_verdict(results)
             if final_verdict is None or verdict < final_verdict:
                 final_verdict = verdict
                 final_results = results
 
         if final_verdict == self.VERDICT_REJECT:
-            logger.info('<{0}> Rejecting message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
-            self.setreply('550', '5.7.1', 'Message is {0[class]}'.format(final_results))
+            logger.info(
+                '<{0}> Rejecting message with queue id {1} based on DSPAM '
+                'results: user={2[user]} class={2[class]} '
+                'confidence={2[confidence]}'.format(
+                    self.id, queue_id, final_results))
+            self.setreply('550', '5.7.1', 'Message is {0[class]}'.format(
+                final_results))
             return Milter.REJECT
         elif final_verdict == self.VERDICT_QUARANTINE:
-            logger.info('<{0}> Quarantining message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
+            logger.info(
+                '<{0}> Quarantining message with queue id {1} based on DSPAM '
+                'results: user={2[user]} class={2[class]} '
+                'confidence={2[confidence]}'.format(
+                    self.id, queue_id, final_results))
             self.add_dspam_headers(final_results)
-            self.quarantine('Message is {0[class]} according to DSPAM'.format(final_results))
+            self.quarantine('Message is {0[class]} according to DSPAM'.format(
+                final_results))
             return Milter.ACCEPT
         else:
-            logger.info('<{0}> Accepting message with queue id {1} based on DSPAM results: user={2[user]} class={2[class]} confidence={2[confidence]}'.format(self.id, queue_id, final_results))
+            logger.info(
+                '<{0}> Accepting message with queue id {1} based on DSPAM '
+                'results: user={2[user]} class={2[class]} '
+                'confidence={2[confidence]}'.format(
+                    self.id, queue_id, final_results))
             self.add_dspam_headers(final_results)
             return Milter.ACCEPT
 
@@ -197,7 +234,9 @@ class DspamMilter(Milter.Base):
 
         """
         time_spent = time.time() - self.time_start
-        logger.debug('<{}> Disconnect from [{}]:{}, time spent {:.3f} seconds'.format(self.id, self.client_ip, self.client_port, time_spent))
+        logger.debug(
+            '<{}> Disconnect from [{}]:{}, time spent {:.3f} seconds'.format(
+                self.id, self.client_ip, self.client_port, time_spent))
         return Milter.CONTINUE
 
     def compute_verdict(self, results):
@@ -206,7 +245,7 @@ class DspamMilter(Milter.Base):
         and return a verdict based on that.
 
         The verdict classes are matched in the order: reject_classes,
-        quarantine_classes, accept_classes. This means that you can configure 
+        quarantine_classes, accept_classes. This means that you can configure
         different verdicts for different confidence results, for instance:
         reject_classes= Spam:0.99       # Reject obvious spam
         quarantine_classes = Spam:0.7   # Quarantine spam with confidence
@@ -219,25 +258,36 @@ class DspamMilter(Milter.Base):
 
         """
         if results['class'] in self.reject_classes:
-            threshold = self.reject_classes[ results['class'] ]
+            threshold = self.reject_classes[results['class']]
             if float(results['confidence']) >= threshold:
-                logger.debug('<{0}> Suggesting to reject the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug(
+                    '<{0}> Suggesting to reject the message based on DSPAM '
+                    'results: user={1[user]}, class={1[class]}, '
+                    'confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_REJECT
 
         if results['class'] in self.quarantine_classes:
-            threshold = self.quarantine_classes[ results['class'] ]
+            threshold = self.quarantine_classes[results['class']]
             if float(results['confidence']) >= threshold:
-                logger.debug('<{0}> Suggesting to quarantine the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug(
+                    '<{0}> Suggesting to quarantine the message based on '
+                    'DSPAM results: user={1[user]}, class={1[class]}, '
+                    'confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_QUARANTINE
 
         if results['class'] in self.accept_classes:
-            threshold = self.accept_classes[ results['class'] ]
+            threshold = self.accept_classes[results['class']]
             if float(results['confidence']) >= threshold:
-                logger.debug('<{0}> Suggesting to accept the message based on DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(self.id, results))
+                logger.debug(
+                    '<{0}> Suggesting to accept the message based on DSPAM '
+                    'results: user={1[user]}, class={1[class]}, '
+                    'confidence={1[confidence]}'.format(self.id, results))
                 return self.VERDICT_ACCEPT
 
-        logger.debug('<{0}> Suggesting to accept the message, no verdict class matched DSPAM results: user={1[user]}, class={1[class]}, confidence={1[confidence]}'.format(
-                    self.id, results))
+        logger.debug(
+            '<{0}> Suggesting to accept the message, no verdict class matched '
+            'DSPAM results: user={1[user]}, class={1[class]}, '
+            'confidence={1[confidence]}'.format(self.id, results))
         return self.VERDICT_ACCEPT
 
     def add_dspam_headers(self, results):
@@ -251,15 +301,20 @@ class DspamMilter(Milter.Base):
             hname = self.header_prefix + header
             if header.lower() in results:
                 hvalue = results[header.lower()]
-                logger.debug('<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
+                logger.debug(
+                    '<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
                 self.addheader(hname, hvalue)
             elif header == 'Processed':
                 # X-DSPAM-Processed: Wed Dec 12 02:19:23 2012
-                hvalue = datetime.datetime.now().strftime('%a %b %d %H:%M:%S %Y')
-                logger.debug('<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
+                hvalue = datetime.datetime.now().strftime(
+                    '%a %b %d %H:%M:%S %Y')
+                logger.debug(
+                    '<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
                 self.addheader(hname, hvalue)
             else:
-                logger.warning('<{}> Not adding header {}, no data available in DSPAM results'.format(self.id, hname))
+                logger.warning(
+                    '<{}> Not adding header {}, no data available in '
+                    'DSPAM results'.format(self.id, hname))
 
 
 class DspamMilterDaemon(object):
@@ -280,7 +335,7 @@ class DspamMilterDaemon(object):
         utils.log_to_syslog()
         logger.info('DSPAM Milter startup (v{})'.format(VERSION))
         if config_file is not None:
-             self.configure(config_file)
+            self.configure(config_file)
         if self.daemonize:
             utils.daemonize(self.pidfile)
         Milter.factory = DspamMilter
@@ -297,8 +352,9 @@ class DspamMilterDaemon(object):
         try:
             cfg.readfp(open(config_file))
         except IOError, err:
-            logger.critical('Error while reading config file {}: {}'.format(
-                            config_file, err.strerror))
+            logger.critical(
+                'Error while reading config file {}: {}'.format(
+                    config_file, err.strerror))
             sys.exit(1)
         logger.info('Parsed config file ' + config_file)
 
@@ -307,11 +363,13 @@ class DspamMilterDaemon(object):
             loglevel = cfg.get('milter', 'loglevel')
             loglevel_numeric = getattr(logging, loglevel.upper(), None)
             if not isinstance(loglevel_numeric, int):
-                logger.critical('Config contains unsupported loglevel: ' + loglevel)
+                logger.critical(
+                    'Config contains unsupported loglevel: ' + loglevel)
                 exit(1)
             rl = logging.getLogger()
             rl.setLevel(loglevel_numeric)
-            logger.debug('Config option applied: milter->loglevel: {}'.format(loglevel))
+            logger.debug(
+                'Config option applied: milter->loglevel: {}'.format(loglevel))
 
         # Apply all config options to their respective classes
         section_class_map = {
@@ -327,19 +385,27 @@ class DspamMilterDaemon(object):
                 continue
             logger.debug('Handling config section: ' + section)
 
-            dict_options = ['headers', 'reject_classes', 'quarantine_classes', 'accept_classes']
+            dict_options = [
+                'headers',
+                'reject_classes',
+                'quarantine_classes',
+                'accept_classes'
+            ]
             for option in cfg.options(section):
-                # Kludge: static_user needs to be set on the milter, not on the client
+                # Kludge: static_user needs to be set on the milter,
+                #   not on the client
                 if section == 'dspam' and option == 'static_user':
                     value = cfg.get('dspam', 'static_user')
                     DspamMilter.static_user = value
-                    logger.debug('Config option applied: dspam->static_user: {}'.format(
-                                 value))
+                    logger.debug(
+                        'Config option applied: dspam->static_user: {}'.format(
+                            value))
                     continue
 
                 if not hasattr(class_, option):
-                    logger.warning('Config contains unknown option: {}:{}'.format(
-                                   section, option))
+                    logger.warning(
+                        'Config contains unknown option: {}:{}'.format(
+                            section, option))
                     continue
 
                 value = cfg.get(section, option)
@@ -351,9 +417,11 @@ class DspamMilterDaemon(object):
                     value = True
 
                 setattr(class_, option, value)
-                logger.debug('Config option applied: {}->{}: {}'.format(
-                             section, option, value))
+                logger.debug(
+                    'Config option applied: {}->{}: {}'.format(
+                        section, option, value))
         logger.debug('Configuration completed')
+
 
 def main(config_file=None):
     d = DspamMilterDaemon()

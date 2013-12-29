@@ -7,10 +7,12 @@ import socket
 import logging
 import re
 
+
 class DspamClientError(Exception):
     pass
 
 logger = logging.getLogger(__name__)
+
 
 class DspamClient(object):
     """
@@ -29,7 +31,7 @@ class DspamClient(object):
     DSPAM server setup
     ==================
     To use the client to speak with a DSPAM server, the server must be
-    configured to expose a TCP (dspam.conf: ServerHost, ServerPort) or 
+    configured to expose a TCP (dspam.conf: ServerHost, ServerPort) or
     UNIX domain socket (dspam.conf: ServerDomainSocketPath).
     The server can support mulitple modes (dspam.conf: ServerMode) for
     interaction with connecting clients. Which mode you need, depends on
@@ -43,7 +45,7 @@ class DspamClient(object):
     You need to specify the socket where DSPAM is listening when creating
     a new instance. If you need to use DLMTP features (probably most of the
     time), you also need to pass the ident and password.
-    
+
     """
 
     # Default configuration
@@ -56,7 +58,7 @@ class DspamClient(object):
         Initialize new DSPAM client.
 
         The socket specifies where DSPAM is listening. Specify it in the form:
-        unix:PATH or inet:PORT[@HOST]. For example, the default UNIX domain 
+        unix:PATH or inet:PORT[@HOST]. For example, the default UNIX domain
         socket in dspam.conf would look like: unix:/var/run/dspam/dspam.sock,
         and the default TCP socket: inet:24@localhost.
 
@@ -76,7 +78,7 @@ class DspamClient(object):
         self.dlmtp = False
         self.results = {}
         # Some internal structures
-        self._socket  = None
+        self._socket = None
         self._recipients = []
 
     def __del__(self):
@@ -97,10 +99,11 @@ class DspamClient(object):
         """
         if not line.endswith('\r\n'):
             if line.endswith('\n'):
-                #logger.debug('Fixing bare LF before sending data to socket')
+                logger.debug('Fixing bare LF before sending data to socket')
                 line = line[0:-1] + '\r\n'
             else:
-                #logger.debug('Fixing missing CRLF before sending data to socket')
+                logger.debug(
+                    'Fixing missing CRLF before sending data to socket')
                 line = line + '\r\n'
         logger.debug('Client sent: ' + line.rstrip())
         self._socket.send(line)
@@ -130,7 +133,7 @@ class DspamClient(object):
         """
         Peek at the data in the server response.
 
-        Peeking should only be done when the response can be predicted. 
+        Peeking should only be done when the response can be predicted.
         Make sure that the socket will not block by requesting too
         much data from it while peeking.
 
@@ -144,23 +147,28 @@ class DspamClient(object):
 
     def connect(self):
         """
-        Connect to TCP or UNIX domain socket, and process the server LMTP greeting.
+        Connect to TCP or domain socket, and process the server LMTP greeting.
 
         """
         # extract proto from socket setting
         try:
             (proto, spec) = self.socket.split(':')
         except ValueError:
-            raise DspamClientError('Failed to parse DSPAM socket specification, no proto found: '+ self.socket)
+            raise DspamClientError(
+                'Failed to parse DSPAM socket specification, '
+                'no proto found: ' + self.socket)
 
         if proto == 'unix':
             # connect to UNIX domain socket
             try:
-                self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self._socket = socket.socket(
+                    socket.AF_UNIX, socket.SOCK_STREAM)
                 self._socket.connect(spec)
             except socket.error, err:
                 self._socket = None
-                raise DspamClientError('Failed to connect to DSPAM server at socket {}: {}'.format(spec, err))
+                raise DspamClientError(
+                    'Failed to connect to DSPAM server '
+                    'at socket {}: {}'.format(spec, err))
             logger.debug('Connected to DSPAM server at socket {}'.format(spec))
 
         elif proto == 'inet' or proto == 'inet6':
@@ -175,29 +183,37 @@ class DspamClient(object):
                 host = 'localhost'
 
             try:
-                self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._socket = socket.socket(
+                    socket.AF_INET, socket.SOCK_STREAM)
                 self._socket.connect((host, port))
             except socket.error, err:
                 self._socket = None
-                raise DspamClientError('Failed to connect to DSPAM server at host {} port {}: {}'.format(host, port, err))
-            logger.debug('Connected to DSPAM server at host {}, port {}'.format(host, port))
+                raise DspamClientError(
+                    'Failed to connect to DSPAM server at host {} '
+                    'port {}: {}'.format(host, port, err))
+            logger.debug(
+                'Connected to DSPAM server at host {}, port {}'.format(
+                    host, port))
         else:
-            raise DspamClientError('Failed to parse DSPAM socket specification, unknown proto '+ proto)
+            raise DspamClientError(
+                'Failed to parse DSPAM socket specification, '
+                'unknown proto ' + proto)
 
         resp = self._read()
         if not resp.startswith('220'):
-            raise DspamClientError('Unexpected server response at connect: ' + resp)
+            raise DspamClientError(
+                'Unexpected server response at connect: ' + resp)
 
     def lhlo(self):
         """
         Send LMTP LHLO greeting, and process the server response.
 
         A regular LMTP greeting is sent, and if accepted by the server, the
-        capabilities it returns are parsed. 
+        capabilities it returns are parsed.
 
-        DLMTP authentication starts here by announcing the dlmtp_ident in 
+        DLMTP authentication starts here by announcing the dlmtp_ident in
         the LHLO as our hostname. When the ident is accepted and DLMTP
-        mode is enabled (dspam.conf: ServerMode=dspam|auto), the 
+        mode is enabled (dspam.conf: ServerMode=dspam|auto), the
         DSPAMPROCESSMODE capability is announced by the server.
         When this capability is detected, the <DspamClient>.dlmtp flag
         will be enabled.
@@ -213,7 +229,8 @@ class DspamClient(object):
         while not finished:
             resp = self._read()
             if not resp.startswith('250'):
-                raise DspamClientError('Unexpected server response at LHLO: ' + resp)
+                raise DspamClientError(
+                    'Unexpected server response at LHLO: ' + resp)
             if resp[4:20] == 'DSPAMPROCESSMODE':
                 self.dlmtp = True
                 logger.debug('Detected DLMTP extension in LHLO response')
@@ -231,17 +248,17 @@ class DspamClient(object):
         ServerPass.<ident>="<password>") in stead of the actual sender.
 
         When you need want DSPAM to deliver the message itself and need to
-        pass the server an actual envelope sender for that, add the 
+        pass the server an actual envelope sender for that, add the
         --mail-from parameter in client_args.
 
         When the server is setup in LMTP mode only (dspam.conf:
-        ServerMode=standard), the envelope sender is a regular envelope 
+        ServerMode=standard), the envelope sender is a regular envelope
         sender, and is re-used when delivering the message after processing.
 
         Client args
         ===========
         When in DLMTP mode (and with proper auth credentials), the server
-        accepts parameters specified by the client. These are in the form 
+        accepts parameters specified by the client. These are in the form
         as they are passed to the command-line 'dspam' program.
         See man dspam(1) for details, and the process() or classify() methods
         in this class for simple examples.
@@ -255,7 +272,8 @@ class DspamClient(object):
             raise DspamClientError('Arguments are mutually exclusive')
 
         if client_args and not self.dlmtp:
-            raise DspamClientError('Cannot send client args, server does not support DLMTP')
+            raise DspamClientError(
+                'Cannot send client args, server does not support DLMTP')
 
         command = 'MAIL FROM:'
         if not sender:
@@ -271,12 +289,13 @@ class DspamClient(object):
         self._send(command + '\r\n')
         resp = self._read()
         if not resp.startswith('250'):
-            raise DspamClientError('Unexpected server response at MAIL FROM: ' + resp)
+            raise DspamClientError(
+                'Unexpected server response at MAIL FROM: ' + resp)
 
     def rcptto(self, recipients):
         """
         Send LMTP RCPT TO command, and process the server response.
-    
+
         The DSPAM server expects to find one or more valid DSPAM users as
         envelope recipients. The set recipient will be the user DSPAM
         processes mail for.
@@ -294,7 +313,9 @@ class DspamClient(object):
             self._send('RCPT TO:<{}>\r\n'.format(rcpt))
             resp = self._read()
             if not resp.startswith('250'):
-                raise DspamClientError('Unexpected server response at RCPT TO for recipient {}: {}'.format(rcpt, resp))
+                raise DspamClientError(
+                    'Unexpected server response at RCPT TO for '
+                    'recipient {}: {}'.format(rcpt, resp))
             self._recipients.append(rcpt)
 
     def data(self, message):
@@ -324,9 +345,9 @@ class DspamClient(object):
         Note: while processing response data in stdout mode, it's not possible
         to relate the returned messages to a specific recipient, when multiple
         recipients were specified in rcptto(). There is no guarantee
-        that the message stored in <DspamClient>.results['foo'] actually belongs
-        to the recipient 'foo'. If this relationship needs to be guaranteed,
-        send each message with a single recipient in rcptto().
+        that the message stored in <DspamClient>.results['foo'] actually
+        belongs to the recipient 'foo'. If this relationship needs to be
+        guaranteed, send each message with a single recipient in rcptto().
 
         args:
         message -- The full message payload to pass to the server.
@@ -335,7 +356,8 @@ class DspamClient(object):
         self._send('DATA\r\n')
         resp = self._read()
         if not resp.startswith('354'):
-            raise DspamClientError('Unexpected server response at DATA: ' + resp)
+            raise DspamClientError(
+                'Unexpected server response at DATA: ' + resp)
 
         # Send message payload
         for line in message.split('\n'):
@@ -347,21 +369,22 @@ class DspamClient(object):
         # Send end-of-data
         self._send('.\r\n')
 
-        # Depending on the server configuration, several responses are possible.
+        # Depending on server configuration, several responses are possible:
         # * Standard LMTP response code, once for each recipient:
         #   250 2.6.0 <bar> Message accepted for delivery
         # * Summary response (--deliver=summary), once for each recipient:
-        #   X-DSPAM-Result: bar; result="Spam"; class="Spam"; probability=1.0000; \
-        #     confidence=0.85; signature=50c50c0f315636261418125
+        #   X-DSPAM-Result: bar; result="Spam"; class="Spam"; \
+        #     probability=1.0000; confidence=0.85; \
+        #     signature=50c50c0f315636261418125
         #   (after the last summary line, a single dot is sent)
         # * Stdout response (--delivery=stdout), once for each recipient:
         #   X-Daemon-Classification: INNOCENT
         #   <complete mail body>
         #
-        # Note that when an unknown recipient is passed in, DSPAM will simply 
-        #   deliver the message (dspam.conf: (Un)TrustedDeliveryAgent, DeliveryHost)
-        #   unaltered and unfiltered. The response for unknown recipients
-        #   will still be something indicating 'accepted'.
+        # Note that when an unknown recipient is passed in, DSPAM will simply
+        #   deliver the message (dspam.conf: (Un)TrustedDeliveryAgent,
+        #   DeliveryHost) unaltered and unfiltered. The response for unknown
+        #   recipients will still be something indicating 'accepted'.
 
         peek = self._peek(24)
         if peek.startswith('250'):
@@ -372,46 +395,59 @@ class DspamClient(object):
                 resp = self._read()
                 match = regex.match(resp)
                 if not match:
-                    raise DspamClientError('Unexpected server response at END-OF-DATA: ' + resp)
+                    raise DspamClientError(
+                        'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
                 try:
                     self._recipients.remove(rcpt)
                 except ValueError:
-                    raise DspamClientError('Message was accepted for unknown recipient ' +rcpt)
-                self.results[ rcpt ] = {'accepted': True }
-                logger.debug('Message accepted for recipient {} in LMTP mode'.format(rcpt))
+                    raise DspamClientError(
+                        'Message was accepted for unknown recipient ' + rcpt)
+                self.results[rcpt] = {'accepted': True}
+                logger.debug(
+                    'Message accepted for recipient {} in LMTP mode'.format(
+                        rcpt))
                 if not len(self._recipients):
                     finished = True
 
         elif peek.startswith('X-DSPAM-Result:'):
             # Response is in summary format
-            regex = re.compile('X-DSPAM-Result: ([^;]+); result="(\w+)"; class="(\w+)"; probability=([\d\.]+); confidence=([\d\.]+); signature=([\w,/]+)')
+            regex = re.compile('X-DSPAM-Result: ([^;]+); result="(\w+)"; '
+                               'class="(\w+)"; probability=([\d\.]+); '
+                               'confidence=([\d\.]+); signature=([\w,/]+)')
             finished = False
             while not finished:
                 resp = self._read()
                 match = regex.match(resp)
                 if not match:
-                    raise DspamClientError('Unexpected server response at END-OF-DATA: ' + resp)
+                    raise DspamClientError(
+                        'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
                 try:
                     self._recipients.remove(rcpt)
                 except ValueError:
-                    raise DspamClientError('Message was accepted for unknown recipient {}'.format(rcpt))
+                    raise DspamClientError(
+                        'Message was accepted for unknown '
+                        'recipient {}'.format(rcpt))
 
                 # map results to their DSPAM classification result names
-                fields = ('user', 'result', 'class', 'probability', 'confidence', 'signature')
+                fields = ('user', 'result', 'class',
+                          'probability', 'confidence', 'signature')
                 self.results[rcpt] = dict(zip(fields, match.groups()))
                 if self.results[rcpt]['signature'] == 'N/A':
                     del(self.results[rcpt]['signature'])
 
-                logger.debug('Message handled for recipient {} in DLMTP summary mode, result is {}'.format(rcpt, match.group(2)))
+                logger.debug(
+                    'Message handled for recipient {} in DLMTP summary mode, '
+                    'result is {}'.format(rcpt, match.group(2)))
                 if not len(self._recipients):
                     # we received responses for all accepted recipients
                     finished = True
             # read final dot
             resp = self._read()
             if resp != '.':
-                raise DspamClientError('Unexpected server response at END-OF-DATA: ' + resp)
+                raise DspamClientError(
+                    'Unexpected server response at END-OF-DATA: ' + resp)
 
         elif peek.startswith('X-Daemon-Classification:'):
             # Response is in stdout format
@@ -421,30 +457,43 @@ class DspamClient(object):
                 resp = self._read()
                 if resp.startswith('X-Daemon-Classification:'):
                     if message != '':
-                        # A new message body starts, store the previous one 
+                        # A new message body starts, store the previous one
                         rcpt = self._recipients.pop(0)
-                        self.results[ rcpt ] = {'result': result, 'message': message}
-                        logger.debug('Message handled for recipient {} in DLMTP stdout mode, result is {}, message body is {} chars'.format(rcpt, result, len(message)))
+                        self.results[rcpt] = {
+                            'result': result,
+                            'message': message
+                        }
+                        logger.debug(
+                            'Message handled for recipient {} in DLMTP '
+                            'stdout mode, result is {}, message body '
+                            'is {} chars'.format(rcpt, result, len(message)))
                         message = ''
                     # Remember next result
                     result = resp[25:]
 
                 elif resp == '.':
-                    # A single dot can signal end-of-data, or might be just regular mail data.
+                    # A single dot can signal end-of-data, or might be just
+                    #   regular mail data.
                     self._socket.setblocking(False)
                     try:
-                        # If _peek() succeeds, we did not reach end-of-data yet,
+                        # If _peek() succeeds, we did not reach end-of-data yet
                         #   so it was message content.
                         peek = self._peek(1)
                         message = message + '\r\n' + resp
                     except socket.error:
-                        # reached end-of-data, store message and finish processing
+                        # reached end-of-data, store message and finish
                         finished = True
                         rcpt = self._recipients.pop(0)
                         # strip final newline
                         message = message[0:-2]
-                        self.results[ rcpt ] = {'result': result, 'message': message}
-                        logger.debug('Message accepted for recipient {} in DLMTP stdout mode, result is {}, message body is {} chars'.format(rcpt, result, len(message)))
+                        self.results[rcpt] = {
+                            'result': result,
+                            'message': message
+                        }
+                        logger.debug(
+                            'Message accepted for recipient {} in DLMTP '
+                            'stdout mode, result is {}, message body '
+                            'is {} chars'.format(rcpt, result, len(message)))
 
                     self._socket.setblocking(True)
 
@@ -456,7 +505,8 @@ class DspamClient(object):
                         message = message + '\r\n' + resp
 
         else:
-            raise DspamClientError('Unexpected server response at END-OF-DATA: ' + resp)
+            raise DspamClientError(
+                'Unexpected server response at END-OF-DATA: ' + resp)
 
     def rset(self):
         """
@@ -503,7 +553,9 @@ class DspamClient(object):
 
         # check for valid result format
         if 'class' not in self.results[user]:
-            raise DspamClientError('Unexpected response format from server at END-OF-DATA, an error occcured')
+            raise DspamClientError(
+                'Unexpected response format from server at END-OF-DATA, '
+                'an error occured')
 
         return self.results[user]
 
@@ -527,7 +579,9 @@ class DspamClient(object):
 
         # check for valid result format
         if 'class' not in self.results[user]:
-            raise DspamClientError('Unexpected response format from server at END-OF-DATA, an error occcured')
+            raise DspamClientError(
+                'Unexpected response format from server at END-OF-DATA, '
+                'an error occured')
 
         return self.results[user]
 
@@ -590,4 +644,4 @@ The line above, you see?
     #c = DspamClient()
 
     results = c.process(message, 'recipient@example.net')
-    print('Classification results: '+ str(results))
+    print('Classification results: ' + str(results))

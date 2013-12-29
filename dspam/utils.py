@@ -14,6 +14,7 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+
 def daemonize(pidfile=None):
     """
     Turn the running process into a proper daemon according to PEP3143.
@@ -22,12 +23,13 @@ def daemonize(pidfile=None):
     pidfile --The pidfile to create.
 
     """
+
     # Prevent core dumps
-    resource.setrlimit(resource.RLIMIT_CORE, (0,0))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
     # Change working directory
     os.chdir("/")
-        
+
     # Change file creation mask
     os.umask(0)
 
@@ -102,23 +104,25 @@ def config_str2dict(option_value):
 
 
 def log_to_syslog():
-     """
-     Configure logging to syslog.
+    """
+    Configure logging to syslog.
 
-     """
-     # Get root logger
-     rl = logging.getLogger()
-     rl.setLevel('INFO')
+    """
+    # Get root logger
+    rl = logging.getLogger()
+    rl.setLevel('INFO')
 
-     # Stderr gets critical messages (mostly config/setup issues)
-     #   only when not daemonized
-     stderr = logging.StreamHandler(stream=sys.stderr)
-     stderr.setLevel(logging.CRITICAL)
-     stderr.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s'))
-     rl.addHandler(stderr)
+    # Stderr gets critical messages (mostly config/setup issues)
+    #   only when not daemonized
+    stderr = logging.StreamHandler(stream=sys.stderr)
+    stderr.setLevel(logging.CRITICAL)
+    stderr.setFormatter(logging.Formatter(
+        '%(asctime)s %(name)s: %(levelname)s %(message)s'))
+    rl.addHandler(stderr)
 
-     # All interesting data goes to syslog, using root logger's loglevel
-     syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
-     syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(levelname)s %(message)s'))
-     rl.addHandler(syslog)
-     #logger.info('Logging configured')
+    # All interesting data goes to syslog, using root logger's loglevel
+    syslog = SysLogHandler(address='/dev/log', facility=SysLogHandler.LOG_MAIL)
+    syslog.setFormatter(logging.Formatter(
+        '%(name)s[%(process)d]: %(levelname)s %(message)s'))
+    rl.addHandler(syslog)
+    #logger.info('Logging configured')
