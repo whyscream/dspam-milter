@@ -1,9 +1,11 @@
 language: python
 python:
   - "2.7"
+before_install:
+  - "sudo apt-get update -qq"
 install: 
   - "pip install --use-mirrors pytest-pep8 flexmock"
-  - "apt-get install python-docutils"
+  - "sudo apt-get install -qq python-docutils"
 script: 
   - "python setup.py test"
   - "rst2html README.rst > /dev/null"
