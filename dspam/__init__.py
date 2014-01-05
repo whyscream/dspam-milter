@@ -3,4 +3,4 @@
 #
 # See LICENSE for the license.
 
-VERSION = 'GIT'
+VERSION = '0.3'
