@@ -1,5 +1,5 @@
 dspam-milter README
-==============
+===================
 
 DSPAM milter is an implementation of the milter interface available in 
 several MTAs for DSPAM_, a statistical spam and content filter for e-mail.
