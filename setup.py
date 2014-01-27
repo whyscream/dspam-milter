@@ -1,39 +1,32 @@
-# Copyright (c) 2012, Tom Hendrikx
+# Copyright (c) 2014, Tom Hendrikx
 # All rights reserved.
 #
 # See LICENSE for the license.
 
-from distutils.core import setup, Command
+from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
+import sys
 
-class PyTest(Command):
-    user_options = []
-    def initialize_options(self):
-        pass
+# http://pytest.org/dev/goodpractises.html#integration-with-setuptools-test-commands
+class PyTest(TestCommand):
     def finalize_options(self):
-        pass
-    def run(self):
-        import sys,subprocess
-        errno = subprocess.call(['py.test', '--verbose', '--pep8', 'dspam/'])
-        raise SystemExit(errno)
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
 
-setup(name='dspam-milter',
-    description='Milter implementation for DSPAM',
-    author='Tom Hendrikx',
-    author_email='dspam-milter@whyscream.net',
-    url='https://github.com/whyscream/dspam-milter',
-    version='GIT',
-    packages=['dspam'],
-    scripts=['bin/dspam-milter'],
-    data_files=[('/etc/', ['bin/dspam-milter.cfg'])],
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Programming Language :: Python',
-        'Topic :: Communications :: Email :: Filters'
-    ],
-    license='New (3-clause) BSD License',
-    cmdclass={
-        'test': PyTest
-    }
+setup(
+    name = 'dspam-milter',
+    version = 'GIT',
+    packages = ['dspam'],
+    scripts = ['bin/dspam-milter'],
+    include_package_data = True,
+    install_requires = ['pymilter'],
+    zip_safe = True,
+    tests_require=['pytest', 'flexmock'],
+    cmdclass = {'test': PyTest},
 )
