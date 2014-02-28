@@ -14,14 +14,6 @@ also try to send an e-mail_.
    :target: https://travis-ci.org/whyscream/dspam-milter
    :alt: build status
 
-Features
-========
-
-Currently the package contains:
-
-* dspam.client: A client that can talk to a DSPAM daemon over a socket.
-* dspam.milter: A milter application to use DSPAM classification in an MTA.
-
 Requirements
 ============
 
@@ -49,6 +41,15 @@ In general, dlmtp_* settings under `[dspam]` need to be configured, and
 DSPAM configuration needs to be altered to match these. Details on which
 changes need to be made in the DSPAM configuration is also available 
 in the config file.
+
+Features
+========
+
+Currently the package contains:
+
+* dspam.client: A client (python class) that can talk to a DSPAM daemon over a socket.
+* dspam.milter: A milter application to use DSPAM classification in an MTA.
+
 
 License
 =======
