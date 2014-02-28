@@ -193,9 +193,11 @@ class DspamMilter(Milter.Base):
         final_verdict = None
         for rcpt in self.dspam.results:
             results = self.dspam.results[rcpt]
-            logger.info('<{}> DSPAM returned results for RCPT {}: {}'.format(
-                self.id, rcpt,
-                ' '.join('{}={}'.format(k, v) for
+            logger.info(
+                '<{0}> DSPAM returned results for message with queue id {1} '
+                'and RCPT {2}: {3}'.format(
+                    self.id, queue_id, rcpt,
+                    ' '.join('{}={}'.format(k, v) for
                          k, v in results.iteritems())))
             verdict = self.compute_verdict(results)
             if final_verdict is None or verdict < final_verdict:
