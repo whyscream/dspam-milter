@@ -23,7 +23,11 @@ setup(
     name = 'dspam-milter',
     version = 'GIT',
     packages = ['dspam'],
-    scripts = ['bin/dspam-milter'],
+    entry_points = {
+        'console_scripts': [
+            'dspam-milter = dspam.milter:main',
+        ]
+    },
     include_package_data = True,
     install_requires = ['pymilter'],
     zip_safe = True,
