@@ -3,6 +3,7 @@
 #
 # See LICENSE for the license.
 
+import argparse
 import ConfigParser
 import datetime
 import logging
@@ -10,6 +11,7 @@ import os.path
 import re
 import sys
 import time
+from pkg_resources import resource_string
 
 import Milter
 
@@ -424,12 +426,19 @@ class DspamMilterDaemon(object):
 
 
 def main():
-    config_file = None
-    if len(sys.argv) >= 2:
-        config_file = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Milter interface to the DSPAM spam filter engine')
+    parser.add_argument('--config', help='Path to the config file')
+    parser.add_argument('--dump-config', help='Writes the default config to stdout', action='store_true')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
+    args = parser.parse_args()
+
+    if args.dump_config:
+        sample_config = resource_string(__name__, 'dspam-milter.cfg-dist')
+        print(sample_config)
+        sys.exit(0)
 
     d = DspamMilterDaemon()
-    d.run(config_file)
+    d.run(args.config)
 
 if __name__ == "__main__":
     main()
