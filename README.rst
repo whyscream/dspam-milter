@@ -19,15 +19,14 @@ Requirements
 
 * Python 2.7 (python)
 * DSPAM running in daemon mode
-
-To use the milter, you also need:
-
 * pymilter_ (python-milter)
 
 Installation
 ============
 
-To install, simply run ``python setup.py install`` in the distibution root.
+To install, run ``pip install dspam-milter`` in order to get everything
+installed. If you downloaded/forked the git repository, you can use ``python
+setup.py install`` in the repository root.
 
 Milter usage
 ============
@@ -37,9 +36,9 @@ have been installed in your path. Behaviour of the daemon can be controlled
 by a configuration file. You can create the default config by running 
 ``dspam-milter --dump-config > /etc/dspam-milter.cfg``.
 
-In general, dlmtp_* settings under `[dspam]` need to be configured, and 
+In general, ``dlmtp_*`` settings under ``[dspam]`` need to be configured, and
 DSPAM configuration needs to be altered to match these. Details on which
-changes need to be made in the DSPAM configuration is also available 
+changes need to be made in the DSPAM configuration are also available
 in the config file.
 
 When the configuration files have been altered and DSPAM is reloaded to enable
