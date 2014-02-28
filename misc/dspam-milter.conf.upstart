@@ -11,4 +11,4 @@ respawn
 
 setuid dspam
 setgid dspam
-exec /usr/bin/dspam-milter
+exec /usr/bin/dspam-milter --config /etc/dspam-milter.cfg

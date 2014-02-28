@@ -42,6 +42,11 @@ DSPAM configuration needs to be altered to match these. Details on which
 changes need to be made in the DSPAM configuration is also available 
 in the config file.
 
+When the configuration files have been altered and DSPAM is reloaded to enable
+the new config, you can run dspam-milter by executing ``dspam-milter 
+--config /etc/dspam-milter.cfg``. There is also an upstart init script available
+in the misc/ folder for those running Ubuntu.
+
 Features
 ========
 
