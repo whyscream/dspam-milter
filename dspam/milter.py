@@ -423,7 +423,11 @@ class DspamMilterDaemon(object):
         logger.debug('Configuration completed')
 
 
-def main(config_file=None):
+def main():
+    config_file = None
+    if len(sys.argv) >= 2:
+        config_file = sys.argv[1]
+
     d = DspamMilterDaemon()
     d.run(config_file)
 

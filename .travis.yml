@@ -5,7 +5,7 @@ before_install:
   - "sudo apt-get update -qq"
 install: 
   - "pip install --use-mirrors pytest-pep8 flexmock"
-  - "sudo apt-get install -qq python-docutils"
+  - "sudo apt-get install -qq python-docutils libmilter-dev"
 script: 
   - "python setup.py test"
   - "rst2html README.rst > /dev/null"
