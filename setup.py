@@ -22,6 +22,7 @@ class PyTest(TestCommand):
 setup(
     name = 'dspam-milter',
     version = 'GIT',
+    description = 'Milter interface to the DSPAM spam filter engine',
     packages = ['dspam'],
     include_package_data = True,
     entry_points = {
