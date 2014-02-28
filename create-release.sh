@@ -17,7 +17,7 @@ elif ! git merge --no-ff "$branch"; then
 elif ! sed -i "s/^VERSION = '.*'$/VERSION = '$version'/" dspam/__init__.py; then
   echo "Failed to set new version number in project" && exit 1
 
-elif ! sed -i "s/version='.*',$/version='$version',/" setup.py; then
+elif ! sed -i "s/version = '.*',$/version = '$version',/" setup.py; then
   echo "Failed to set new version number in setup.py" && exit 1
 
 elif ! git commit -m "Set version to $version" dspam/__init__.py setup.py; then
