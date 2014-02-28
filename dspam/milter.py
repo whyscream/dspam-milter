@@ -3,6 +3,7 @@
 #
 # See LICENSE for the license.
 
+import argparse
 import ConfigParser
 import datetime
 import logging
@@ -10,6 +11,7 @@ import os.path
 import re
 import sys
 import time
+from pkg_resources import resource_string
 
 import Milter
 
@@ -191,9 +193,11 @@ class DspamMilter(Milter.Base):
         final_verdict = None
         for rcpt in self.dspam.results:
             results = self.dspam.results[rcpt]
-            logger.info('<{}> DSPAM returned results for RCPT {}: {}'.format(
-                self.id, rcpt,
-                ' '.join('{}={}'.format(k, v) for
+            logger.info(
+                '<{0}> DSPAM returned results for message with queue id {1} '
+                'and RCPT {2}: {3}'.format(
+                    self.id, queue_id, rcpt,
+                    ' '.join('{}={}'.format(k, v) for
                          k, v in results.iteritems())))
             verdict = self.compute_verdict(results)
             if final_verdict is None or verdict < final_verdict:
@@ -423,9 +427,20 @@ class DspamMilterDaemon(object):
         logger.debug('Configuration completed')
 
 
-def main(config_file=None):
+def main():
+    parser = argparse.ArgumentParser(description='Milter interface to the DSPAM spam filter engine')
+    parser.add_argument('--config', help='Path to the config file')
+    parser.add_argument('--dump-config', help='Writes the default config to stdout', action='store_true')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
+    args = parser.parse_args()
+
+    if args.dump_config:
+        sample_config = resource_string(__name__, 'dspam-milter.cfg-dist')
+        print(sample_config)
+        sys.exit(0)
+
     d = DspamMilterDaemon()
-    d.run(config_file)
+    d.run(args.config)
 
 if __name__ == "__main__":
     main()
