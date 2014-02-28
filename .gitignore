@@ -2,7 +2,7 @@ MANIFEST
 build
 dist
 *.egg
-
+*.egg-info
 *.pyc
 
 .coverage
