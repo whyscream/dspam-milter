@@ -407,7 +407,7 @@ class DspamMilterDaemon(object):
 
                 if not hasattr(class_, option):
                     logger.warning(
-                        'Config contains unknown option: {}:{}'.format(
+                        'Config contains unknown option: {}->{}'.format(
                             section, option))
                     continue
 
