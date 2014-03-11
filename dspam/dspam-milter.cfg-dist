@@ -30,7 +30,7 @@
 # running the milter.
 #
 # Default:
-# pidfile = /tmp/dspam-milter.pid
+# pidfile = /var/run/dspam/dspam-milter.pid
 
 # daemonize
 # The milter normally runs in the background, but can stay in the

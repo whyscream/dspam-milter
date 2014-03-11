@@ -65,11 +65,16 @@ def daemonize(pidfile=None):
                 pass
 
     # Create pidfile
-    if pidfile is not None:
+    if pidfile is None or pidfile.strip() == '':
+        logger.debug('Empty pidfile set')
+    else:
         pid = os.getpid()
-        with open(pidfile, 'w') as f:
-            f.write('{}\n'.format(pid))
-            f.close()
+        try:
+            with open(pidfile, 'w') as f:
+                f.write('{}\n'.format(pid))
+                f.close()
+        except EnvironmentError:
+            logger.error('Failed to create pidfile at {}'.format(pidfile))
 
         def remove_pid_file():
             os.remove(pidfile)
