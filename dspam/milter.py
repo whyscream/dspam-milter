@@ -331,8 +331,7 @@ class DspamMilterDaemon(object):
     socket = 'inet:2425@localhost'
     timeout = 300
     loglevel = 'INFO'
-    #pidfile = '/var/run/dspam/dspam-milter.pid'
-    pidfile = '/tmp/dspam-milter.pid'
+    pidfile = '/var/run/dspam/dspam-milter.pid'
     daemonize = True
 
     def run(self, config_file=None):
