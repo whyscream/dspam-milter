@@ -1,5 +1,4 @@
 #!/lib/init/init-d-script
-# vim: set syn=sh:
 ### BEGIN INIT INFO
 # Provides:          dspam_milter
 # Required-Start:    $remote_fs $syslog
@@ -14,11 +13,11 @@
 # Author: Tom Hendrikx <dspam-milter@whyscream.net>
 
 DESC="DSpam Milter Interface"
-DAEMON=/usr/bin/dspam-milter
+DAEMON=/usr/local/bin/dspam-milter
 DAEMON_ARGS="--config /etc/dspam-milter.cfg"
 DAEMON_USER="dspam"
 DAEMON_GROUP="dspam"
-PIDFILE=/var/run/dspam/milter.pid
+PIDFILE=/tmp/dspam-milter.pid
 
 do_start_cmd_override() {
     # Override do_start_cmd to add chuid option
@@ -30,7 +29,4 @@ do_start_cmd_override() {
         --chuid $DAEMON_USER:$DAEMON_GROUP \
         --startas $DAEMON --name $NAME -- $DAEMON_ARGS \
         || return 2
-    # Add code here, if necessary, that waits for the process to be ready
-    # to handle requests from services started subsequently which depend
-    # on this one.  As a last resort, sleep for some time.
 }
