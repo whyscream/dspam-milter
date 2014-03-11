@@ -34,7 +34,7 @@ Milter usage
 Dspam-milter is a ready to use application. The command ``dspam-milter`` should
 have been installed in your path. Behaviour of the daemon can be controlled
 by a configuration file. You can create the default config by running 
-``dspam-milter --dump-config > /etc/dspam-milter.cfg``.
+``dspam-milter --default-config > /etc/dspam-milter.cfg``.
 
 In general, ``dlmtp_*`` settings under ``[dspam]`` need to be configured, and
 DSPAM configuration needs to be altered to match these. Details on which
