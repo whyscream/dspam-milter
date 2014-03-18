@@ -398,9 +398,11 @@ class DspamClient(object):
                     raise DspamClientError(
                         'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
-                try:
-                    self._recipients.remove(rcpt)
-                except ValueError:
+                for r in self._recipients:
+                    if r.lower() == rcpt.lower():
+                        self._recipients.remove(r)
+                        break
+                else:
                     raise DspamClientError(
                         'Message was accepted for unknown recipient ' + rcpt)
                 self.results[rcpt] = {'accepted': True}
@@ -423,9 +425,11 @@ class DspamClient(object):
                     raise DspamClientError(
                         'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
-                try:
-                    self._recipients.remove(rcpt)
-                except ValueError:
+                for r in self._recipients:
+                    if r.lower() == rcpt.lower():
+                        self._recipients.remove(r)
+                        break
+                else:
                     raise DspamClientError(
                         'Message was accepted for unknown '
                         'recipient {}'.format(rcpt))
