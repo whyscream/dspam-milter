@@ -1,0 +1,32 @@
+#!/lib/init/init-d-script
+### BEGIN INIT INFO
+# Provides:          dspam_milter
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Should-Start:      dspam
+# Should-Stop:       dspam
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: dspam milter interface
+### END INIT INFO
+
+# Author: Tom Hendrikx <dspam-milter@whyscream.net>
+
+DESC="DSpam Milter Interface"
+DAEMON=/usr/local/bin/dspam-milter
+DAEMON_ARGS="--config /etc/dspam-milter.cfg"
+DAEMON_USER="dspam"
+DAEMON_GROUP="dspam"
+PIDFILE=/var/run/dspam/dspam-milter.pid
+
+do_start_cmd_override() {
+    # Override do_start_cmd to add chuid option
+    start-stop-daemon --start --quiet ${PIDFILE:+--pidfile ${PIDFILE}} \
+        --chuid $DAEMON_USER:$DAEMON_GROUP \
+        --startas $DAEMON --name $NAME --test > /dev/null \
+        || return 1
+    start-stop-daemon --start ${PIDFILE:+--pidfile ${PIDFILE}} \
+        --chuid $DAEMON_USER:$DAEMON_GROUP \
+        --startas $DAEMON --name $NAME -- $DAEMON_ARGS \
+        || return 2
+}
