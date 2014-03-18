@@ -213,3 +213,39 @@ def test_data_dotstuffing():
     flexmock(c).should_receive('_peek').once().and_return(
         '250 2.5.0 <foo> Message ')
     c.data('.')
+
+
+def test_case_insensitive_recipient_lmtp_mode():
+    c = DspamClient()
+    c._recipients = ['FOO']
+    flexmock(c).should_receive('_send').with_args('DATA\r\n')
+    flexmock(c).should_receive('_read').and_return(
+        '354 Enter mail, end with "." on a line by itself').and_return(
+        '250 2.5.0 <foo> Message accepted for delivery')
+    flexmock(c).should_receive('_send').with_args('Some message for FOO')
+    flexmock(c).should_receive('_send').with_args('.\r\n')
+    flexmock(c).should_receive('_peek').once().and_return(
+        '250 2.5.0 <foo> Message ')
+    c.data('Some message for FOO')
+
+def test_case_insensitive_recipient_summary_mode():
+    """
+    The same as the earlier test, but now assuming we told DSPAM
+    at MAIL FROM stage to use summary mode.
+    """
+
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
+    c = DspamClient()
+    c._recipients = ['FOO']
+    flexmock(c).should_receive('_send').with_args('DATA\r\n')
+    flexmock(c).should_receive('_read').and_return(
+        '354 Enter mail, end with "." on a line by itself').and_return(
+        'X-DSPAM-Result: foo; result="Innocent"; class="Innocent"; probability=0.4000; confidence=1.00; signature=5328aeee248441704964098').and_return(
+        '.')
+    flexmock(c).should_receive('_send').with_args('Some message for FOO')
+    flexmock(c).should_receive('_send').with_args('.\r\n')
+    flexmock(c).should_receive('_peek').once().and_return(
+        'X-DSPAM-Result: foo; res')
+    c.data('Some message for FOO')
