@@ -233,10 +233,6 @@ def test_case_insensitive_recipient_summary_mode():
     The same as the earlier test, but now assuming we told DSPAM
     at MAIL FROM stage to use summary mode.
     """
-
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-
     c = DspamClient()
     c._recipients = ['FOO']
     flexmock(c).should_receive('_send').with_args('DATA\r\n')
