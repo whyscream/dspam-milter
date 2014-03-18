@@ -4,7 +4,7 @@ python:
 before_install:
   - "sudo apt-get update -qq"
 install: 
-  - "pip install --use-mirrors 'pytest-cov pytest-pep8 flexmock"
+  - "pip install --use-mirrors pytest-cov pytest-pep8 flexmock"
   - "sudo apt-get install -qq python-docutils libmilter-dev"
 script: 
   - "python setup.py test"
