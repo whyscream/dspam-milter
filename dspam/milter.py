@@ -429,11 +429,11 @@ class DspamMilterDaemon(object):
 def main():
     parser = argparse.ArgumentParser(description='Milter interface to the DSPAM spam filter engine')
     parser.add_argument('--config', help='Path to the config file')
-    parser.add_argument('--dump-config', help='Writes the default config to stdout', action='store_true')
+    parser.add_argument('--default-config', help='Writes the default config to stdout', action='store_true')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
-    if args.dump_config:
+    if args.default_config:
         sample_config = resource_string(__name__, 'dspam-milter.cfg-dist')
         print(sample_config)
         sys.exit(0)
