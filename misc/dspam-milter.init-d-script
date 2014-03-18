@@ -17,7 +17,7 @@ DAEMON=/usr/local/bin/dspam-milter
 DAEMON_ARGS="--config /etc/dspam-milter.cfg"
 DAEMON_USER="dspam"
 DAEMON_GROUP="dspam"
-PIDFILE=/tmp/dspam-milter.pid
+PIDFILE=/var/run/dspam/dspam-milter.pid
 
 do_start_cmd_override() {
     # Override do_start_cmd to add chuid option
