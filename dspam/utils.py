@@ -119,7 +119,7 @@ def log_to_syslog():
 
     # Stderr gets critical messages (mostly config/setup issues)
     #   only when not daemonized
-    stderr = logging.StreamHandler(stream=sys.stderr)
+    stderr = logging.StreamHandler()
     stderr.setLevel(logging.CRITICAL)
     stderr.setFormatter(logging.Formatter(
         '%(asctime)s %(name)s: %(levelname)s %(message)s'))
