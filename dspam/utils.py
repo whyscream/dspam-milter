@@ -44,7 +44,7 @@ def daemonize(pidfile=None):
 
     # Create signal handler for SIGTERM
     def terminate(signal, stack_frame):
-        msg = 'Terminating on signal {}'.format(signal)
+        msg = 'Terminating on signal {0}'.format(signal)
         logger.info(msg)
         raise SystemExit(msg)
     signal.signal(signal.SIGTERM, terminate)
@@ -71,10 +71,10 @@ def daemonize(pidfile=None):
         pid = os.getpid()
         try:
             with open(pidfile, 'w') as f:
-                f.write('{}\n'.format(pid))
+                f.write('{0}\n'.format(pid))
                 f.close()
         except EnvironmentError:
-            logger.error('Failed to create pidfile at {}'.format(pidfile))
+            logger.error('Failed to create pidfile at {0}'.format(pidfile))
 
         def remove_pid_file():
             os.remove(pidfile)
