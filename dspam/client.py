@@ -168,8 +168,8 @@ class DspamClient(object):
                 self._socket = None
                 raise DspamClientError(
                     'Failed to connect to DSPAM server '
-                    'at socket {}: {}'.format(spec, err))
-            logger.debug('Connected to DSPAM server at socket {}'.format(spec))
+                    'at socket {0}: {1}'.format(spec, err))
+            logger.debug('Connected to DSPAM server at socket {0}'.format(spec))
 
         elif proto == 'inet' or proto == 'inet6':
             # connect to TCP socket
@@ -189,10 +189,10 @@ class DspamClient(object):
             except socket.error, err:
                 self._socket = None
                 raise DspamClientError(
-                    'Failed to connect to DSPAM server at host {} '
-                    'port {}: {}'.format(host, port, err))
+                    'Failed to connect to DSPAM server at host {0} '
+                    'port {1}: {2}'.format(host, port, err))
             logger.debug(
-                'Connected to DSPAM server at host {}, port {}'.format(
+                'Connected to DSPAM server at host {0}, port {1}'.format(
                     host, port))
         else:
             raise DspamClientError(
@@ -284,7 +284,7 @@ class DspamClient(object):
         command = command + '<' + sender + '>'
 
         if client_args:
-            command = command + ' DSPAMPROCESSMODE="{}"'.format(client_args)
+            command = command + ' DSPAMPROCESSMODE="{0}"'.format(client_args)
 
         self._send(command + '\r\n')
         resp = self._read()
@@ -310,12 +310,12 @@ class DspamClient(object):
 
         """
         for rcpt in recipients:
-            self._send('RCPT TO:<{}>\r\n'.format(rcpt))
+            self._send('RCPT TO:<{0}>\r\n'.format(rcpt))
             resp = self._read()
             if not resp.startswith('250'):
                 raise DspamClientError(
                     'Unexpected server response at RCPT TO for '
-                    'recipient {}: {}'.format(rcpt, resp))
+                    'recipient {0}: {1}'.format(rcpt, resp))
             self._recipients.append(rcpt)
 
     def data(self, message):
@@ -407,7 +407,7 @@ class DspamClient(object):
                         'Message was accepted for unknown recipient ' + rcpt)
                 self.results[rcpt] = {'accepted': True}
                 logger.debug(
-                    'Message accepted for recipient {} in LMTP mode'.format(
+                    'Message accepted for recipient {0} in LMTP mode'.format(
                         rcpt))
                 if not len(self._recipients):
                     finished = True
@@ -432,7 +432,7 @@ class DspamClient(object):
                 else:
                     raise DspamClientError(
                         'Message was accepted for unknown '
-                        'recipient {}'.format(rcpt))
+                        'recipient {0}'.format(rcpt))
 
                 # map results to their DSPAM classification result names
                 fields = ('user', 'result', 'class',
@@ -442,8 +442,8 @@ class DspamClient(object):
                     del(self.results[rcpt]['signature'])
 
                 logger.debug(
-                    'Message handled for recipient {} in DLMTP summary mode, '
-                    'result is {}'.format(rcpt, match.group(2)))
+                    'Message handled for recipient {0} in DLMTP summary mode, '
+                    'result is {1}'.format(rcpt, match.group(2)))
                 if not len(self._recipients):
                     # we received responses for all accepted recipients
                     finished = True
@@ -468,9 +468,9 @@ class DspamClient(object):
                             'message': message
                         }
                         logger.debug(
-                            'Message handled for recipient {} in DLMTP '
-                            'stdout mode, result is {}, message body '
-                            'is {} chars'.format(rcpt, result, len(message)))
+                            'Message handled for recipient {0} in DLMTP '
+                            'stdout mode, result is {1}, message body '
+                            'is {2} chars'.format(rcpt, result, len(message)))
                         message = ''
                     # Remember next result
                     result = resp[25:]
@@ -495,9 +495,9 @@ class DspamClient(object):
                             'message': message
                         }
                         logger.debug(
-                            'Message accepted for recipient {} in DLMTP '
-                            'stdout mode, result is {}, message body '
-                            'is {} chars'.format(rcpt, result, len(message)))
+                            'Message accepted for recipient {0} in DLMTP '
+                            'stdout mode, result is {1}, message body '
+                            'is {2} chars'.format(rcpt, result, len(message)))
 
                     self._socket.setblocking(True)
 
