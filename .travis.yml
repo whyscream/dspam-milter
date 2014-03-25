@@ -9,3 +9,4 @@ install:
 script: 
   - "python setup.py test"
   - "rst2html README.rst > /dev/null"
+  - "rst2html CHANGELOG.rst > /dev/null"
