@@ -75,7 +75,7 @@ class DspamMilter(Milter.Base):
         self.client_ip = hostaddr[0]
         self.client_port = hostaddr[1]
         self.time_start = time.time()
-        logger.debug('<{}> Connect from {}[{}]:{}'.format(
+        logger.debug('<{0}> Connect from {1}[{2}]:{3}'.format(
             self.id, hostname, self.client_ip, self.client_port))
         return Milter.CONTINUE
 
@@ -92,7 +92,7 @@ class DspamMilter(Milter.Base):
             rcpt = self.recipient_delimiter_re.sub('', rcpt)
         if rcpt not in self.recipients:
             self.recipients.append(rcpt)
-            logger.debug('<{}> Received RCPT {}'.format(self.id, rcpt))
+            logger.debug('<{0}> Received RCPT {1}'.format(self.id, rcpt))
         return Milter.CONTINUE
 
     @Milter.noreply
@@ -105,11 +105,11 @@ class DspamMilter(Milter.Base):
         about to add are deleted.
 
         """
-        self.message += "{}: {}\r\n".format(name, value)
-        logger.debug('<{}> Received {} header'.format(self.id, name))
+        self.message += "{0}: {1}\r\n".format(name, value)
+        logger.debug('<{0}> Received {1} header'.format(self.id, name))
         if name.lower().startswith(self.header_prefix.lower()):
             self.remove_headers.append(name)
-            logger.debug('<{}> Going to remove {} header'.format(
+            logger.debug('<{0}> Going to remove {1} header'.format(
                 self.id, name))
         return Milter.CONTINUE
 
@@ -129,7 +129,7 @@ class DspamMilter(Milter.Base):
 
         """
         self.message += block
-        logger.debug('<{}> Received {} bytes of message body'.format(
+        logger.debug('<{0}> Received {1} bytes of message body'.format(
             self.id, len(block)))
         return Milter.CONTINUE
 
@@ -146,12 +146,12 @@ class DspamMilter(Milter.Base):
         """
         for header in self.remove_headers:
             self.chgheader(header, 1, '')
-            logger.info('<{}> Removing existing {} header'.format(
+            logger.info('<{0}> Removing existing {1} header'.format(
                 self.id, header))
 
         queue_id = self.getsymval('i')
         logger.debug(
-            '<{}> Sending message with MTA queue id {} to DSPAM'.format(
+            '<{0}> Sending message with MTA queue id {1} to DSPAM'.format(
                 self.id, queue_id))
 
         try:
@@ -161,13 +161,13 @@ class DspamMilter(Milter.Base):
                 self.dspam.lhlo()
                 if not self.dspam.dlmtp:
                     logger.warning(
-                        '<{}> Connection to DSPAM is established, but DLMTP '
+                        '<{0}> Connection to DSPAM is established, but DLMTP '
                         'seems unavailable'.format(self.id))
             else:
                 self.dspam.rset()
         except DspamClientError, err:
             logger.error(
-                '<{}> An error ocurred while connecting to DSPAM: {}'.format(
+                '<{0}> An error ocurred while connecting to DSPAM: {1}'.format(
                     self.id, err))
             return Milter.TEMPFAIL
 
@@ -180,7 +180,7 @@ class DspamMilter(Milter.Base):
             self.dspam.data(self.message)
         except DspamClientError, err:
             logger.error(
-                '<{}> An error ocurred while talking to DSPAM: {}'.format(
+                '<{0}> An error ocurred while talking to DSPAM: {1}'.format(
                     self.id, err))
             return Milter.TEMPFAIL
 
@@ -197,7 +197,7 @@ class DspamMilter(Milter.Base):
                 '<{0}> DSPAM returned results for message with queue id {1} '
                 'and RCPT {2}: {3}'.format(
                     self.id, queue_id, rcpt,
-                    ' '.join('{}={}'.format(k, v) for
+                    ' '.join('{0}={1}'.format(k, v) for
                          k, v in results.iteritems())))
             verdict = self.compute_verdict(results)
             if final_verdict is None or verdict < final_verdict:
@@ -239,7 +239,7 @@ class DspamMilter(Milter.Base):
         """
         time_spent = time.time() - self.time_start
         logger.debug(
-            '<{}> Disconnect from [{}]:{}, time spent {:.3f} seconds'.format(
+            '<{0}> Disconnect from [{1}]:{2}, time spent {3:.3f} seconds'.format(
                 self.id, self.client_ip, self.client_port, time_spent))
         return Milter.CONTINUE
 
@@ -306,18 +306,18 @@ class DspamMilter(Milter.Base):
             if header.lower() in results:
                 hvalue = results[header.lower()]
                 logger.debug(
-                    '<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
+                    '<{0}> Adding header {1}: {2}'.format(self.id, hname, hvalue))
                 self.addheader(hname, hvalue)
             elif header == 'Processed':
                 # X-DSPAM-Processed: Wed Dec 12 02:19:23 2012
                 hvalue = datetime.datetime.now().strftime(
                     '%a %b %d %H:%M:%S %Y')
                 logger.debug(
-                    '<{}> Adding header {}: {}'.format(self.id, hname, hvalue))
+                    '<{0}> Adding header {1}: {2}'.format(self.id, hname, hvalue))
                 self.addheader(hname, hvalue)
             else:
                 logger.warning(
-                    '<{}> Not adding header {}, no data available in '
+                    '<{0}> Not adding header {1}, no data available in '
                     'DSPAM results'.format(self.id, hname))
 
 
@@ -336,14 +336,14 @@ class DspamMilterDaemon(object):
 
     def run(self, config_file=None):
         utils.log_to_syslog()
-        logger.info('DSPAM Milter startup (v{})'.format(VERSION))
+        logger.info('DSPAM Milter startup (v{0})'.format(VERSION))
         if config_file is not None:
             self.configure(config_file)
         if self.daemonize:
             utils.daemonize(self.pidfile)
         Milter.factory = DspamMilter
         Milter.runmilter('DspamMilter', self.socket, self.timeout)
-        logger.info('DSPAM Milter shutdown (v{})'.format(VERSION))
+        logger.info('DSPAM Milter shutdown (v{0})'.format(VERSION))
         logging.shutdown()
 
     def configure(self, config_file):
@@ -356,7 +356,7 @@ class DspamMilterDaemon(object):
             cfg.readfp(open(config_file))
         except IOError, err:
             logger.critical(
-                'Error while reading config file {}: {}'.format(
+                'Error while reading config file {0}: {1}'.format(
                     config_file, err.strerror))
             sys.exit(1)
         logger.info('Parsed config file ' + config_file)
@@ -372,7 +372,7 @@ class DspamMilterDaemon(object):
             rl = logging.getLogger()
             rl.setLevel(loglevel_numeric)
             logger.debug(
-                'Config option applied: milter->loglevel: {}'.format(loglevel))
+                'Config option applied: milter->loglevel: {0}'.format(loglevel))
 
         # Apply all config options to their respective classes
         section_class_map = {
@@ -401,13 +401,13 @@ class DspamMilterDaemon(object):
                     value = cfg.get('dspam', 'static_user')
                     DspamMilter.static_user = value
                     logger.debug(
-                        'Config option applied: dspam->static_user: {}'.format(
+                        'Config option applied: dspam->static_user: {0}'.format(
                             value))
                     continue
 
                 if not hasattr(class_, option):
                     logger.warning(
-                        'Config contains unknown option: {}->{}'.format(
+                        'Config contains unknown option: {0}->{1}'.format(
                             section, option))
                     continue
 
@@ -421,7 +421,7 @@ class DspamMilterDaemon(object):
 
                 setattr(class_, option, value)
                 logger.debug(
-                    'Config option applied: {}->{}: {}'.format(
+                    'Config option applied: {0}->{1}: {2}'.format(
                         section, option, value))
         logger.debug('Configuration completed')
 
