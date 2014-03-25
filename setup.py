@@ -19,6 +19,10 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
+install_requires = ['pymilter']
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    install_requires.append('argparse')
+
 setup(
     name = 'dspam-milter',
     version = 'GIT',
@@ -30,7 +34,7 @@ setup(
             'dspam-milter = dspam.milter:main',
         ]
     },
-    install_requires = ['pymilter'],
+    install_requires = install_requires,
     zip_safe = True,
     tests_require=['pytest', 'pytest-cov', 'pytest-pep8','flexmock'],
     cmdclass = {'test': PyTest},
