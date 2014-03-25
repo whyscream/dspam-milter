@@ -36,6 +36,6 @@ setup(
     },
     install_requires = install_requires,
     zip_safe = True,
-    tests_require=['pytest', 'pytest-cov', 'pytest-pep8','flexmock'],
+    tests_require=['pytest-cov', 'pytest-pep8', 'pytest', 'flexmock'],
     cmdclass = {'test': PyTest},
 )
