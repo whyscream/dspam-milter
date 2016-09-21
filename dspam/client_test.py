@@ -50,16 +50,17 @@ def test_read():
 
 
 def test_connect(monkeypatch):
-    def mp_socket_connect(self, address):
-        # succeed without creating a connection
+    def noop(*args, **kwargs):
         pass
-    monkeypatch.setattr(socket.socket, 'connect', mp_socket_connect)
+    monkeypatch.setattr(socket.socket, 'connect', noop)
 
     c = DspamClient()
     flexmock(c).should_receive('_read').once().and_return(
         '220 DSPAM DLMTP 3.10.2 Authentication Required')
     c.connect()
     assert isinstance(c._socket, socket.socket)
+    # reset the socket to prevent 'Broken pipe' errors during test teardown invoked by DspamClient.quit()
+    c._socket = None
 
 
 def test_connect_unix_failed(tmpdir):
