@@ -164,7 +164,7 @@ class DspamClient(object):
                 self._socket = socket.socket(
                     socket.AF_UNIX, socket.SOCK_STREAM)
                 self._socket.connect(spec)
-            except socket.error, err:
+            except socket.error as err:
                 self._socket = None
                 raise DspamClientError(
                     'Failed to connect to DSPAM server '
@@ -186,7 +186,7 @@ class DspamClient(object):
                 self._socket = socket.socket(
                     socket.AF_INET, socket.SOCK_STREAM)
                 self._socket.connect((host, port))
-            except socket.error, err:
+            except socket.error as err:
                 self._socket = None
                 raise DspamClientError(
                     'Failed to connect to DSPAM server at host {} '

@@ -4,7 +4,6 @@
 # See LICENSE for the license.
 
 import argparse
-import ConfigParser
 import datetime
 import logging
 import os.path
@@ -12,6 +11,10 @@ import re
 import sys
 import time
 from pkg_resources import resource_string
+if sys.version_info >= (3,):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 import Milter
 
@@ -165,7 +168,7 @@ class DspamMilter(Milter.Base):
                         'seems unavailable'.format(self.id))
             else:
                 self.dspam.rset()
-        except DspamClientError, err:
+        except DspamClientError as err:
             logger.error(
                 '<{}> An error ocurred while connecting to DSPAM: {}'.format(
                     self.id, err))
@@ -178,7 +181,7 @@ class DspamMilter(Milter.Base):
             else:
                 self.dspam.rcptto(self.recipients)
             self.dspam.data(self.message)
-        except DspamClientError, err:
+        except DspamClientError as err:
             logger.error(
                 '<{}> An error ocurred while talking to DSPAM: {}'.format(
                     self.id, err))
@@ -351,10 +354,10 @@ class DspamMilterDaemon(object):
         Parse configuration, and setup objects to use it.
 
         """
-        cfg = ConfigParser.RawConfigParser()
+        cfg = configparser.RawConfigParser()
         try:
             cfg.readfp(open(config_file))
-        except IOError, err:
+        except IOError as err:
             logger.critical(
                 'Error while reading config file {}: {}'.format(
                     config_file, err.strerror))

@@ -59,7 +59,7 @@ def daemonize(pidfile=None):
     for fd in [stream.fileno() for stream in streams]:
         try:
             os.close(fd)
-        except OSError, err:
+        except OSError as err:
             if err.errno == errno.EBADF:
                 # File descriptor was not open
                 pass

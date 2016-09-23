@@ -3,7 +3,7 @@ import os.path
 import pytest
 from flexmock import flexmock
 
-from client import *
+from .client import *
 
 
 def test_init():
