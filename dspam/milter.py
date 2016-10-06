@@ -11,15 +11,16 @@ import re
 import sys
 import time
 from pkg_resources import resource_string
-if sys.version_info >= (3,):
-    import configparser
-else:
-    import ConfigParser as configparser
 
 import Milter
 
 from dspam import VERSION, utils
 from dspam.client import *
+
+if sys.version_info >= (3,):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 logger = logging.getLogger(__name__)
 
@@ -200,8 +201,7 @@ class DspamMilter(Milter.Base):
                 '<{0}> DSPAM returned results for message with queue id {1} '
                 'and RCPT {2}: {3}'.format(
                     self.id, queue_id, rcpt,
-                    ' '.join('{}={}'.format(k, v) for
-                         k, v in results.iteritems())))
+                    ' '.join('{}={}'.format(k, v) for k, v in results.iteritems())))
             verdict = self.compute_verdict(results)
             if final_verdict is None or verdict < final_verdict:
                 final_verdict = verdict
