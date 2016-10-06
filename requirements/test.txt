@@ -1,0 +1,6 @@
+-r base.txt
+
+flexmock
+pytest
+pytest-cov
+pytest-pep8
