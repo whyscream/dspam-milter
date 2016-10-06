@@ -11,6 +11,7 @@ of each release.
 HEAD
 ----
 
+* Dropped shell script for creating releases, just use a (dev) version everywhere
 * Old-style init script for debian (contributed by darac in `PR 18`_)
 * Improved pid file handling after report from Alan Chandler
 * Renamed `--dump-config` arg to `--default-config`

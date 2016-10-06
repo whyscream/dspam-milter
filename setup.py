@@ -7,6 +7,8 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import sys
 
+from dspam import VERSION
+
 # http://pytest.org/dev/goodpractises.html#integration-with-setuptools-test-commands
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -21,7 +23,7 @@ class PyTest(TestCommand):
 
 setup(
     name = 'dspam-milter',
-    version = 'GIT',
+    version = VERSION,
     description = 'Milter interface to the DSPAM spam filter engine',
     packages = ['dspam'],
     include_package_data = True,
