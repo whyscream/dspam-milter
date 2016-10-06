@@ -11,6 +11,11 @@ of each release.
 HEAD
 ----
 
+https://github.com/whyscream/dspam-milter/compare/0.3.4...HEAD
+
+0.3.4
+-----
+
 * Dropped shell script for creating releases, just use a (dev) version everywhere
 * Old-style init script for debian (contributed by darac in `PR 18`_)
 * Improved pid file handling after report from Alan Chandler
