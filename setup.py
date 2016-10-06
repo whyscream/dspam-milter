@@ -12,18 +12,6 @@ from dspam import VERSION
 with open('README.rst') as readme:
     long_description = readme.read()
 
-# http://pytest.org/dev/goodpractises.html#integration-with-setuptools-test-commands
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = ['--cov', 'dspam', '.']
-        self.test_suite = True
-    def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
 setup(
     name = 'dspam-milter',
     version = VERSION,
@@ -41,6 +29,4 @@ setup(
     },
     install_requires = ['pymilter'],
     zip_safe = True,
-    tests_require=['pytest', 'pytest-cov', 'pytest-pep8','flexmock'],
-    cmdclass = {'test': PyTest},
 )

@@ -4,9 +4,8 @@ python:
 before_install:
   - "sudo apt-get update -qq"
 install: 
-  - "pip install pytest-cov pytest-pep8 flexmock"
   - "sudo apt-get install -qq python-docutils libmilter-dev"
 script: 
-  - "python setup.py test"
+  - "py.test"
   - "rst2html README.rst > /dev/null"
   - "rst2html CHANGELOG.rst > /dev/null"
