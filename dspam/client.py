@@ -632,20 +632,20 @@ The line above, you see?
 
     logging.basicConfig(level=logging.DEBUG)
 
-    # Config method 1
+    # Config method 1:
     c = DspamClient('inet:2424@localhost', 'test', 'leey2Pah')
 
-    # Config method 2
-    #c = DspamClient()
-    #c.socket = 'inet:2424@localhost'
-    #c.dlmtp_ident = 'test'
-    #c.dlmtp_pass = 'leey2Pah'
+    # Config method 2:
+    # c = DspamClient()
+    # c.socket = 'inet:2424@localhost'
+    # c.dlmtp_ident = 'test'
+    # c.dlmtp_pass = 'leey2Pah'
 
-    # Config method 3
-    #DspamClient.socket = 'inet:2424@localhost'
-    #DspamClient.dlmtp_ident = 'test'
-    #DspamClient.dlmtp_pass = 'leey2Pah'
-    #c = DspamClient()
+    # Config method 3:
+    # DspamClient.socket = 'inet:2424@localhost'
+    # DspamClient.dlmtp_ident = 'test'
+    # DspamClient.dlmtp_pass = 'leey2Pah'
+    # c = DspamClient()
 
     results = c.process(message, 'recipient@example.net')
     print('Classification results: ' + str(results))

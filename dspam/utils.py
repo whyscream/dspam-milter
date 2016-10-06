@@ -130,4 +130,3 @@ def log_to_syslog():
     syslog.setFormatter(logging.Formatter(
         '%(name)s[%(process)d]: %(levelname)s %(message)s'))
     rl.addHandler(syslog)
-    #logger.info('Logging configured')
