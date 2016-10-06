@@ -9,6 +9,9 @@ import sys
 
 from dspam import VERSION
 
+with open('README.rst') as readme:
+    long_description = readme.read()
+
 # http://pytest.org/dev/goodpractises.html#integration-with-setuptools-test-commands
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -24,7 +27,11 @@ class PyTest(TestCommand):
 setup(
     name = 'dspam-milter',
     version = VERSION,
+    url = 'https://github.com/whyscream/dspam-milter',
+    author = 'Tom Hendrikx',
+    author_email = 'dspam-milter@whyscream.net',
     description = 'Milter interface to the DSPAM spam filter engine',
+    long_description = long_description,
     packages = ['dspam'],
     include_package_data = True,
     entry_points = {
