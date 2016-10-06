@@ -5,6 +5,7 @@ before_install:
   - "sudo apt-get update -qq"
 install: 
   - "sudo apt-get install -qq python-docutils libmilter-dev"
+  - pip install -r requirements/test.txt
 script: 
   - "py.test"
   - "rst2html README.rst > /dev/null"
