@@ -3,4 +3,4 @@
 #
 # See LICENSE for the license.
 
-VERSION = '0.3.4.post0'
+VERSION = '0.3.5.dev0'
