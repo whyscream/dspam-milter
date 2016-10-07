@@ -1,10 +1,12 @@
 language: python
 python:
   - "2.7"
+  - "3.5"
 before_install:
   - "sudo apt-get update -qq"
 install: 
   - "sudo apt-get install -qq python-docutils libmilter-dev"
+  - make pymilter PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
   - pip install -r requirements/test.txt
 script: 
   - "py.test"
