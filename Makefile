@@ -1,8 +1,11 @@
 ifdef WORKON_HOME
 	VIRTUALENV = $(WORKON_HOME)/dspam-milter
 else
-	# fallback, also matches travis env
-	VIRTUALENV = $(shell pwd)/virtualenv
+ifdef TRAVIS
+	VIRTUALENV = $(HOME)/virtualenv
+else
+	VIRTUALENV = $(shell pwd)/env
+endif
 endif
 
 PYTHON = $(VIRTUALENV)/bin/python
