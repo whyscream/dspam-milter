@@ -12,7 +12,7 @@ endif
 PYTHON = $(VIRTUALENV)/bin/python
 PYTHON_VERSION_MAJOR = $(shell echo $(PYTHON_VERSION) | cut -c 1)
 
-test: $(VIRTUALENV) pymilter
+test: $(VIRTUALENV) install-pymilter
 	$(PYTHON) -m pip install -r requirements/test.txt
 	$(PYTHON) -m pytest
 
@@ -25,7 +25,7 @@ realclean: clean
 	$(RM) -r $(VIRTUALENV)
 
 # install unreleased pymilter package for python3
-pymilter:
+install-pymilter:
 ifeq ($(PYTHON_VERSION_MAJOR),3)
 	$(PYTHON) -m pip install misc/pymilter-1.0.1-py3-626d5ae.tar.gz
 else
