@@ -2,14 +2,14 @@ ifdef WORKON_HOME
 	VIRTUALENV = $(WORKON_HOME)/dspam-milter
 else
 ifdef TRAVIS
-	VIRTUALENV = $(HOME)/virtualenv
+	VIRTUALENV = $(HOME)/virtualenv/python$(TRAVIS_PYTHON_VERSION)
+	PYTHON_VERSION = $(TRAVIS_PYTHON_VERSION)
 else
 	VIRTUALENV = $(shell pwd)/env
 endif
 endif
 
 PYTHON = $(VIRTUALENV)/bin/python
-PYTHON_VERSION := 2
 PYTHON_VERSION_MAJOR = $(shell echo $(PYTHON_VERSION) | cut -c 1)
 
 test: $(VIRTUALENV) pymilter
