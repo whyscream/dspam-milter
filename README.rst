@@ -54,6 +54,14 @@ Currently the package contains:
 * dspam.client: A client (python class) that can talk to a DSPAM daemon over a socket.
 * dspam.milter: A milter application to use DSPAM classification in an MTA.
 
+Note on Python3 tests
+=====================
+
+The test suite is run in Travis, and tests are also enabled for Python3.
+This ensures that the code stays compatible with both Python 2 and 3. But 
+actually running the package on Python3 requires that all dependencies are
+also available on Python3, and that is still in the works for pymilter.
+
 
 License
 =======
