@@ -398,18 +398,11 @@ class DspamClient(object):
                     raise DspamClientError(
                         'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
-                for r in self._recipients:
-                    if r.lower() == rcpt.lower():
-                        self._recipients.remove(r)
-                        break
-                else:
-                    raise DspamClientError(
-                        'Message was accepted for unknown recipient ' + rcpt)
                 self.results[rcpt] = {'accepted': True}
                 logger.debug(
                     'Message accepted for recipient {} in LMTP mode'.format(
                         rcpt))
-                if not len(self._recipients):
+                if len(self.results) == len(self._recipients):
                     finished = True
 
         elif peek.startswith('X-DSPAM-Result:'):
@@ -425,14 +418,6 @@ class DspamClient(object):
                     raise DspamClientError(
                         'Unexpected server response at END-OF-DATA: ' + resp)
                 rcpt = match.group(1)
-                for r in self._recipients:
-                    if r.lower() == rcpt.lower():
-                        self._recipients.remove(r)
-                        break
-                else:
-                    raise DspamClientError(
-                        'Message was accepted for unknown '
-                        'recipient {}'.format(rcpt))
 
                 # map results to their DSPAM classification result names
                 fields = ('user', 'result', 'class',
@@ -444,7 +429,7 @@ class DspamClient(object):
                 logger.debug(
                     'Message handled for recipient {} in DLMTP summary mode, '
                     'result is {}'.format(rcpt, match.group(2)))
-                if not len(self._recipients):
+                if len(self.results) == len(self._recipients):
                     # we received responses for all accepted recipients
                     finished = True
             # read final dot
