@@ -248,3 +248,23 @@ def test_case_insensitive_recipient_summary_mode():
     flexmock(c).should_receive('_peek').once().and_return(
         'X-DSPAM-Result: foo; res')
     c.data('Some message for FOO')
+
+
+def test_result_for_different_recipient():
+    """
+    Verify that we can handle results even when DSPAM decides to report a different recipient.
+
+    As described in issue #37, sometimes DSPAM will return results for a different
+    recipient name than the one that was initially sent by the cliet.
+    """
+    c = DspamClient()
+    c._recipients = ['ALIAS']
+    flexmock(c).should_receive('_send').with_args('DATA\r\n')
+    flexmock(c).should_receive('_read').and_return(
+        '354 Enter mail, end with "." on a line by itself').and_return(
+        '250 2.5.0 <USER> Message accepted for delivery')
+    flexmock(c).should_receive('_send').with_args('Some message for USER but sent to ALIAS address')
+    flexmock(c).should_receive('_send').with_args('.\r\n')
+    flexmock(c).should_receive('_peek').once().and_return(
+        '250 2.5.0 <USER> Message ')
+    c.data('Some message for USER but sent to ALIAS address')
