@@ -11,6 +11,8 @@ of each release.
 HEAD
 ----
 
+* Allowed DSPAM to change recipient names, after report from Marco Favero
+
 https://github.com/whyscream/dspam-milter/compare/0.3.4...HEAD
 
 0.3.4
