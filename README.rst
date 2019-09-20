@@ -1,6 +1,9 @@
 dspam-milter README
 ===================
 
+NOTE: dpam-milter only works on `python2.7`. Support for `python3.x` is not planned, and upstream support for `python2.7` will end on 2020-01-01. After that date, `dspam-milter` will be obsoleted.
+
+
 DSPAM milter is an implementation of the milter interface available in 
 several MTAs for DSPAM_, a statistical spam and content filter for e-mail.
 The milter talks to the DSPAM daemon over the regular DSPAM socket, using
