@@ -1,7 +1,7 @@
 dspam-milter README
 ===================
 
-NOTE: dpam-milter only works on `python2.7`. Support for `python3.x` is not planned, and upstream support for `python2.7` will end on 2020-01-01. After that date, `dspam-milter` will be obsoleted.
+**NOTE: dpam-milter only works on `python2.7`. Support for `python3.x` is not planned, and upstream support for `python2.7` will end on 2020-01-01. As of that date, `dspam-milter` is considered obsolete. The github repository is archived and not open to changes (issues or PRs).**
 
 
 DSPAM milter is an implementation of the milter interface available in 
